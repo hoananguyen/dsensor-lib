@@ -29,7 +29,6 @@ private const val ONE_MINUS_ALPHA = 1 - ALPHA
 
 class DSensorEventProcessor(dSensorTypes: Int,
                             dSensorEventListener: DSensorEventListener,
-                            handler: Handler? = null,
                             hasGravitySensor: Boolean = true,
                             hasLinearAccelerationSensor: Boolean = true,
                             hasRotationVectorSensor: Boolean = true,
@@ -59,7 +58,8 @@ class DSensorEventProcessor(dSensorTypes: Int,
 
     private val mDSensorEventListener: DSensorEventListener = dSensorEventListener
 
-    private val mHandler: Handler = handler ?: Handler(Looper.getMainLooper())
+    private var mUIHandler: Handler?
+    private val mPostEventRunnable = PostEventRunnable()
 
     /**
      * List to keep history directions of compass for averaging.
@@ -102,6 +102,7 @@ class DSensorEventProcessor(dSensorTypes: Int,
     private val mInclination: DSensorEvent?
 
     init {
+        mUIHandler = Handler(Looper.getMainLooper())
         mXAxisDirectionHistories = if (mDSensorTypes and DSensor.TYPE_X_AXIS_DIRECTION != 0)
             DirectionHistory(historyMaxLength) else null
         mMinusXAxisDirectionHistories = if (mDSensorTypes and DSensor.TYPE_MINUS_X_AXIS_DIRECTION != 0)
@@ -137,9 +138,15 @@ class DSensorEventProcessor(dSensorTypes: Int,
             DSensorEvent(DSensor.TYPE_DEVICE_LINEAR_ACCELERATION, 3) else null
     }
 
+    @Synchronized fun finish() {
+        logger(DSensorEventProcessor::class.java.simpleName, "finish")
+        mUIHandler?.removeCallbacks(mPostEventRunnable)
+        mUIHandler = null
+    }
+
     @Deprecated(message = "TYPE_ORIENTATION is for testing")
     override fun onSensorChanged(event: SensorEvent) {
-        logger(DSensorEventProcessor::class.java.simpleName, "onSensorChanged")
+        logger(DSensorEventProcessor::class.java.simpleName, "onSensorChanged: type = ${event.sensor.type}")
         val dProcessedSensorEvent = DProcessedSensorEvent()
 
         val changedSensorTypes = when {
@@ -151,11 +158,12 @@ class DSensorEventProcessor(dSensorTypes: Int,
             event.sensor.type == Sensor.TYPE_LINEAR_ACCELERATION -> onLinearAccelerationChanged(event, dProcessedSensorEvent)
             event.sensor.type == Sensor.TYPE_ROTATION_VECTOR -> onRotationVectorChanged(event, dProcessedSensorEvent)
             else -> 0
-
         }
 
         if (changedSensorTypes != 0) {
-            mHandler.post { mDSensorEventListener.onDSensorChanged(changedSensorTypes, dProcessedSensorEvent) }
+            mPostEventRunnable.mChangedSensorTypes = changedSensorTypes
+            mPostEventRunnable.mDProcessedSensorEvent = dProcessedSensorEvent
+            mUIHandler?.post(mPostEventRunnable)
         }
     }
 
@@ -710,6 +718,15 @@ class DSensorEventProcessor(dSensorTypes: Int,
                 sensorType, mHistories.first.accuracy,
                 (1.0f / mHistories.size).toLong() * mHistoryTimeStampSum,
                 scaleVector(mHistoriesValuesSum, 1.0f / mHistories.size))
+        }
+    }
+
+    private inner class PostEventRunnable : Runnable {
+        var mChangedSensorTypes: Int = 0
+        lateinit var mDProcessedSensorEvent: DProcessedSensorEvent
+
+        override fun run() {
+            mDSensorEventListener.onDSensorChanged(mChangedSensorTypes, mDProcessedSensorEvent)
         }
     }
 

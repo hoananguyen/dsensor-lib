@@ -3,16 +3,27 @@ package com.hoan.dsensor
 /**
  * Processed sensors' values
  */
-class DProcessedSensorEvent(var accelerometerInDeviceBasis: DSensorEvent? = null, var accelerometerInWorldBasis: DSensorEvent? = null,
-                            var gravityInDeviceBasis: DSensorEvent? = null, var gravityInWorldBasis: DSensorEvent? = null,
-                            var magneticFieldInDeviceBasis: DSensorEvent? = null, var magneticFieldInWorldBasis: DSensorEvent? = null,
-                            var linearAccelerationInDeviceBasis: DSensorEvent? = null, var linearAccelerationInWorldBasis: DSensorEvent? = null,
-                            var gyroscope: DSensorEvent? = null, var rotationVector: DSensorEvent? = null,
-                            var depreciatedOrientation: DSensorEvent? = null, var inclination: DSensorEvent? = null,
-                            var deviceRotation: DSensorEvent? = null, var pitch: DSensorEvent? = null, var roll: DSensorEvent? = null,
-                            var xAxisDirection: DSensorEvent? = null, var minusXAxisDirection: DSensorEvent? = null,
-                            var yAxisDirection: DSensorEvent? = null, var minusYAxisDirection: DSensorEvent? = null,
-                            var zAxisDirection: DSensorEvent? = null, var minusZAxisDirection: DSensorEvent? = null) {
+class DProcessedSensorEvent(var accelerometerInDeviceBasis: DSensorEvent? = null,
+                            var accelerometerInWorldBasis: DSensorEvent? = null,
+                            var gravityInDeviceBasis: DSensorEvent? = null,
+                            var gravityInWorldBasis: DSensorEvent? = null,
+                            var magneticFieldInDeviceBasis: DSensorEvent? = null,
+                            var magneticFieldInWorldBasis: DSensorEvent? = null,
+                            var linearAccelerationInDeviceBasis: DSensorEvent? = null,
+                            var linearAccelerationInWorldBasis: DSensorEvent? = null,
+                            var gyroscope: DSensorEvent? = null,
+                            var rotationVector: DSensorEvent? = null,
+                            var depreciatedOrientation: DSensorEvent? = null,
+                            var inclination: DSensorEvent? = null,
+                            var deviceRotation: DSensorEvent? = null,
+                            var pitch: DSensorEvent? = null,
+                            var roll: DSensorEvent? = null,
+                            var xAxisDirection: DSensorEvent? = null,
+                            var minusXAxisDirection: DSensorEvent? = null,
+                            var yAxisDirection: DSensorEvent? = null,
+                            var minusYAxisDirection: DSensorEvent? = null,
+                            var zAxisDirection: DSensorEvent? = null,
+                            var minusZAxisDirection: DSensorEvent? = null) {
 
 
     override fun toString(): String {

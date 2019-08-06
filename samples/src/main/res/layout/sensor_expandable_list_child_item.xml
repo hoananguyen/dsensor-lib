@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/textview_child_item"
+    android:layout_width="match_parent"
+    android:layout_height="?android:listPreferredItemHeight"
+    android:paddingStart="@dimen/list_child_margin"
+    android:paddingLeft="@dimen/list_child_margin"
+    android:textAppearance="?android:textAppearanceSmall"
+    android:gravity="center_vertical" >
+
+</TextView>

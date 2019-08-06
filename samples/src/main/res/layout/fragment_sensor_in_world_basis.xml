@@ -1,0 +1,167 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginBottom="@dimen/activity_vertical_margin" >
+
+    <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+        <TextView
+                android:id="@+id/textview_sensor"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="@dimen/activity_vertical_margin"
+                android:layout_marginBottom="@dimen/activity_vertical_margin"
+                android:textAppearance="?android:textAppearanceMedium"
+                android:textStyle="bold"/>
+
+        <TextView
+                android:id="@+id/textview_error"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/textview_sensor"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="@dimen/activity_vertical_margin"
+                android:layout_marginBottom="@dimen/activity_vertical_margin"/>
+
+        <TextView
+                android:id="@+id/textview_device_coordinate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/textview_error"
+                android:layout_marginTop="@dimen/activity_vertical_margin"
+                android:layout_marginBottom="@dimen/activity_vertical_margin"
+                android:textAppearance="?android:textAppearanceMedium"
+                android:textStyle="bold"
+                android:text="@string/device_coord"/>
+
+        <TextView
+                android:id="@+id/textview_sensor_x_coord"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/textview_device_coordinate"
+                android:layout_marginBottom="@dimen/activity_vertical_margin"
+                android:layout_marginRight="@dimen/activity_horizontal_margin"
+                android:textStyle="bold"
+                android:textAppearance="?android:textAppearanceMedium"
+                android:text="@string/axis_x" />
+
+        <TextView
+                android:id="@+id/textview_sensor_x_value"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/textview_sensor"
+                android:layout_toRightOf="@id/textview_sensor_x_coord"
+                android:layout_alignBaseline="@id/textview_sensor_x_coord" />
+
+        <TextView
+                android:id="@+id/textview_sensor_y_coord"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/textview_sensor_x_coord"
+                android:layout_marginBottom="@dimen/activity_vertical_margin"
+                android:layout_marginRight="@dimen/activity_horizontal_margin"
+                android:textStyle="bold"
+                android:textAppearance="?android:textAppearanceMedium"
+                android:text="@string/axis_y" />
+
+        <TextView
+                android:id="@+id/textview_sensor_y_value"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/textview_sensor_x_coord"
+                android:layout_toRightOf="@id/textview_sensor_y_coord"
+                android:layout_alignBaseline="@id/textview_sensor_y_coord" />
+
+        <TextView
+                android:id="@+id/textview_sensor_z_coord"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/textview_sensor_y_coord"
+                android:layout_marginBottom="@dimen/activity_vertical_margin"
+                android:layout_marginRight="@dimen/activity_horizontal_margin"
+                android:textStyle="bold"
+                android:textAppearance="?android:textAppearanceMedium"
+                android:text="@string/axis_z" />
+
+        <TextView
+                android:id="@+id/textview_sensor_z_value"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/textview_sensor_y_coord"
+                android:layout_toRightOf="@id/textview_sensor_z_coord"
+                android:layout_alignBaseline="@id/textview_sensor_z_coord" />
+
+        <TextView
+                android:id="@+id/textview_world_coord"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/textview_sensor_z_coord"
+                android:layout_marginTop="@dimen/activity_vertical_margin"
+                android:layout_marginBottom="@dimen/activity_vertical_margin"
+                android:textAppearance="?android:textAppearanceMedium"
+                android:textStyle="bold"
+                android:text="@string/world_coord"/>
+
+        <TextView
+                android:id="@+id/textview_sensor_in_world_coord_x"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/textview_world_coord"
+                android:layout_marginBottom="@dimen/activity_vertical_margin"
+                android:layout_marginRight="@dimen/activity_horizontal_margin"
+                android:textStyle="bold"
+                android:textAppearance="?android:textAppearanceMedium"
+                android:text="@string/axis_x" />
+
+        <TextView
+                android:id="@+id/textview_sensor_in_world_coord_x_value"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/textview_world_coord"
+                android:layout_toRightOf="@id/textview_sensor_in_world_coord_x"
+                android:layout_alignBaseline="@id/textview_sensor_in_world_coord_x" />
+
+        <TextView
+                android:id="@+id/textview_sensor_in_world_coord_y"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/textview_sensor_in_world_coord_x"
+                android:layout_marginBottom="@dimen/activity_vertical_margin"
+                android:layout_marginRight="@dimen/activity_horizontal_margin"
+                android:textStyle="bold"
+                android:textAppearance="?android:textAppearanceMedium"
+                android:text="@string/axis_y" />
+
+        <TextView
+                android:id="@+id/textview_sensor_in_world_coord_y_value"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/textview_sensor_in_world_coord_x"
+                android:layout_toRightOf="@id/textview_sensor_in_world_coord_y"
+                android:layout_alignBaseline="@id/textview_sensor_in_world_coord_y" />
+
+        <TextView
+                android:id="@+id/textview_sensor_in_world_coord_z"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/textview_sensor_in_world_coord_y"
+                android:layout_marginBottom="@dimen/activity_vertical_margin"
+                android:layout_marginRight="@dimen/activity_horizontal_margin"
+                android:textStyle="bold"
+                android:textAppearance="?android:textAppearanceMedium"
+                android:text="@string/axis_z" />
+
+        <TextView
+                android:id="@+id/textview_sensor_in_world_coord_z_value"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/textview_sensor_in_world_coord_y"
+                android:layout_toRightOf="@id/textview_sensor_in_world_coord_z"
+                android:layout_alignBaseline="@id/textview_sensor_in_world_coord_z" />
+
+    </RelativeLayout>
+
+</ScrollView>

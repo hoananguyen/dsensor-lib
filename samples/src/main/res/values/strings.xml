@@ -1,0 +1,37 @@
+<resources>
+    <string name="app_name">Samples</string>
+
+    <!-- sensor -->
+    <string name="accelerometer">Accelerometer</string>
+    <string name="gravity">Gravity</string>
+    <string name="linear_acceleration">Linear Acceleration</string>
+    <string name="magnetic_field">Magnetic Field</string>
+
+    <string name="axis_x">X:</string>
+    <string name="axis_y">Y:</string>
+    <string name="axis_z">Z:</string>
+    <string name="device_coord">Device coordinates</string>
+    <string name="world_coord">World coordinates</string>
+
+    <string name="compass">Compass</string>
+    <string name="compass_3d">3D Compass</string>
+    <string name="compass_and_deprecated_orientation">Compass &amp; Deprecated Orientation</string>
+    <string name="compass_3d_and_deprecated_orientation">3D Compass &amp; Deprecated Orientation</string>
+    <string name="deprecated_orientation">Deprecated Orientation</string>
+    <string name="sensors_info">Sensors info</string>
+    <string name="sensor_info_start">The sensors on this device are</string>
+    <string name="sensor_in_world_coord">Sensor in world coordinates</string>
+
+    <string name="device_not_flat_no_compass_value">No compass value since device is not flat</string>
+
+    <string name="error_no_sensor">The required %Ss sensor is not available on this device</string>
+    <string name="error_no_sensors">The required %Ss sensors are not available on this device</string>
+    <string name="error_unsupported_sensor">Unsupported sensor</string>
+    <string name="error_no_accelerometer_sensor">Fail to start. The required accelerometer sensor is not available on
+        this device
+    </string>
+    <string name="error_no_magnetic_field_sensor">Fail to start. The required magnetic field sensor is not available on
+        this device
+    </string>
+
+</resources>

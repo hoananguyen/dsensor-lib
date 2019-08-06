@@ -1,1 +1,1 @@
-include ':dsensor'
+include ':dsensor', ':samples'

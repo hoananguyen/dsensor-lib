@@ -45,7 +45,7 @@ class DSensorManager(context: Context) {
                               dProcessedEventListener: DProcessedEventListener,
                               sensorRate: Int = SensorManager.SENSOR_DELAY_NORMAL,
                               historyMaxLength: Int = DEFAULT_HISTORY_SIZE): Boolean {
-        logger(DSensorManager::class.java.simpleName, "startDSensor($dProcessedSensorType)")
+        logger(DSensorManager::class.java.simpleName, "startDProcessedSensor($dProcessedSensorType)")
         when (dProcessedSensorType) {
             DProcessedSensor.TYPE_3D_COMPASS -> return onType3DCompassRegistered(context,
                 dProcessedEventListener, sensorRate, historyMaxLength)
@@ -82,7 +82,7 @@ class DSensorManager(context: Context) {
     private fun onTypeCompassRegistered(context: Context, dProcessedEventListener: DProcessedEventListener,
                                         sensorRate: Int = SensorManager.SENSOR_DELAY_NORMAL,
                                         historyMaxLength: Int = DEFAULT_HISTORY_SIZE): Boolean {
-        val dSensorDirectionTypes = getCompassDirectionType(context) or DSensor.TYPE_MINUS_Z_AXIS_DIRECTION
+        val dSensorDirectionTypes = getCompassDirectionType(context)
         logger(DSensorManager::class.java.simpleName, "onTypeCompassRegistered dSensorDirectionTypes = $dSensorDirectionTypes")
         val flag = startDSensor(dSensorDirectionTypes, CompassSensorEventListener(dProcessedEventListener),
             sensorRate, historyMaxLength)
@@ -96,8 +96,9 @@ class DSensorManager(context: Context) {
     private fun onType3DCompassAndOrientationRegistered(context: Context, dProcessedEventListener: DProcessedEventListener,
                                           sensorRate: Int = SensorManager.SENSOR_DELAY_NORMAL,
                                           historyMaxLength: Int = DEFAULT_HISTORY_SIZE): Boolean {
-        val dSensorDirectionTypes = getCompassDirectionType(context) or DSensor.TYPE_MINUS_Z_AXIS_DIRECTION or DSensor.TYPE_DEPRECIATED_ORIENTATION
-        logger(DSensorManager::class.java.simpleName, "onType3DCompassRegistered dSensorDirectionTypes = $dSensorDirectionTypes")
+        val dSensorDirectionTypes =
+            getCompassDirectionType(context) or DSensor.TYPE_MINUS_Z_AXIS_DIRECTION or DSensor.TYPE_DEPRECIATED_ORIENTATION
+        logger(DSensorManager::class.java.simpleName, "onType3DCompassAndOrientationRegistered dSensorDirectionTypes = $dSensorDirectionTypes")
         val flag = startDSensor(dSensorDirectionTypes, Compass3DAndOrientationSensorEventListener(dProcessedEventListener),
             sensorRate, historyMaxLength)
         if (!flag) {
@@ -111,7 +112,7 @@ class DSensorManager(context: Context) {
                                                         sensorRate: Int = SensorManager.SENSOR_DELAY_NORMAL,
                                                         historyMaxLength: Int = DEFAULT_HISTORY_SIZE): Boolean {
         val dSensorDirectionTypes = getCompassDirectionType(context) or DSensor.TYPE_DEPRECIATED_ORIENTATION
-        logger(DSensorManager::class.java.simpleName, "onType3DCompassRegistered dSensorDirectionTypes = $dSensorDirectionTypes")
+        logger(DSensorManager::class.java.simpleName, "onTypeCompassAndOrientationRegistered dSensorDirectionTypes = $dSensorDirectionTypes")
         val flag = startDSensor(dSensorDirectionTypes, CompassAndOrientationSensorEventListener(dProcessedEventListener),
             sensorRate, historyMaxLength)
         if (!flag) {
@@ -122,8 +123,7 @@ class DSensorManager(context: Context) {
     }
 
     private fun getCompassDirectionType(context: Context): Int {
-        val rotation = (context.getSystemService(Context.WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation
-        return when(rotation) {
+        return when((context.getSystemService(Context.WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation) {
             Surface.ROTATION_90 -> DSensor.TYPE_X_AXIS_DIRECTION
             Surface.ROTATION_180 -> DSensor.TYPE_MINUS_Y_AXIS_DIRECTION
             Surface.ROTATION_270 -> DSensor.TYPE_MINUS_X_AXIS_DIRECTION
@@ -146,17 +146,18 @@ class DSensorManager(context: Context) {
                      sensorRate: Int = SensorManager.SENSOR_DELAY_NORMAL,
                      historyMaxLength: Int = DEFAULT_HISTORY_SIZE
                     ): Boolean {
-        logger(DSensorManager::class.java.simpleName, "startDSensor($dSensorTypes, $sensorRate' $historyMaxLength)")
+        logger(DSensorManager::class.java.simpleName, "startDSensor($dSensorTypes, $sensorRate $historyMaxLength)")
 
         mRegisterResult.mErrorList.clear()
         mRegisterResult.mSensorRegisteredList.clear()
 
         if (mDSensorEventProcessor != null) {
             stopDSensor()
-            mSensorThread.start()
         }
 
-        mDSensorEventProcessor = DSensorEventProcessor(dSensorTypes, dSensorEventListener, Handler(mSensorThread.looper),
+        mSensorThread.start()
+
+        mDSensorEventProcessor = DSensorEventProcessor(dSensorTypes, dSensorEventListener,
             mSensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY) != null,
             mSensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION) != null,
             mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR) != null, historyMaxLength)
@@ -230,12 +231,18 @@ class DSensorManager(context: Context) {
     }
 
     private fun registerSensorListenerForRotationMatrix(sensorRate: Int) {
-        if (!mRegisterResult.mSensorRegisteredList.contains(Sensor.TYPE_MAGNETIC_FIELD)) {
-            registerListener(Sensor.TYPE_MAGNETIC_FIELD, sensorRate, TYPE_MAGNETIC_FIELD_NOT_AVAILABLE)
+        if (!mRegisterResult.mSensorRegisteredList.contains(Sensor.TYPE_ROTATION_VECTOR)) {
+            registerListener(Sensor.TYPE_ROTATION_VECTOR, sensorRate, TYPE_ROTATION_VECTOR_NOT_AVAILABLE)
         }
 
-        if (mRegisterResult.mSensorRegisteredList.contains(Sensor.TYPE_MAGNETIC_FIELD)) {
-            registerGravityListener(sensorRate)
+        if (mRegisterResult.mErrorList.contains(TYPE_ROTATION_VECTOR_NOT_AVAILABLE)) {
+            if (!mRegisterResult.mSensorRegisteredList.contains(Sensor.TYPE_MAGNETIC_FIELD)) {
+                registerListener(Sensor.TYPE_MAGNETIC_FIELD, sensorRate, TYPE_MAGNETIC_FIELD_NOT_AVAILABLE)
+            }
+
+            if (mRegisterResult.mSensorRegisteredList.contains(Sensor.TYPE_MAGNETIC_FIELD)) {
+                registerGravityListener(sensorRate)
+            }
         }
     }
 
@@ -258,17 +265,14 @@ class DSensorManager(context: Context) {
     fun stopDSensor() {
         logger(DSensorManager::class.java.simpleName, "stopDSensor")
 
-        if (mSensorThread.isAlive) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-                mSensorThread.quitSafely()
-            } else {
-                mSensorThread.quit()
-            }
-        }
-
         if (mDSensorEventProcessor != null) {
+            mDSensorEventProcessor?.finish()
             mSensorManager.unregisterListener(mDSensorEventProcessor)
             mDSensorEventProcessor = null
+        }
+
+        if (mSensorThread.isAlive) {
+            mSensorThread.quit()
         }
     }
 
@@ -307,7 +311,7 @@ class DSensorManager(context: Context) {
 
         override fun onDSensorChanged(changedDSensorTypes: Int, processedSensorEvent: DProcessedSensorEvent) {
             val result: DSensorEvent? = when {
-                processedSensorEvent.minusZAxisDirection!!.values[0].isNaN() -> when {
+                processedSensorEvent.minusZAxisDirection ==  null || processedSensorEvent.minusZAxisDirection!!.values[0].isNaN() -> when {
                     changedDSensorTypes and DSensor.TYPE_Y_AXIS_DIRECTION == 0 -> when {
                         changedDSensorTypes and DSensor.TYPE_MINUS_Y_AXIS_DIRECTION == 0 -> when {
                             changedDSensorTypes and DSensor.TYPE_X_AXIS_DIRECTION == 0 -> processedSensorEvent.minusXAxisDirection
@@ -352,7 +356,7 @@ class DSensorManager(context: Context) {
         override fun onDSensorChanged(changedDSensorTypes: Int, processedSensorEvent: DProcessedSensorEvent) {
             val result: DSensorEvent? = when {
                 changedDSensorTypes and DSensor.TYPE_DEPRECIATED_ORIENTATION == 0 -> when {
-                    processedSensorEvent.minusZAxisDirection!!.values[0].isNaN() -> when {
+                    processedSensorEvent.minusZAxisDirection == null || processedSensorEvent.minusZAxisDirection!!.values[0].isNaN() -> when {
                         changedDSensorTypes and DSensor.TYPE_Y_AXIS_DIRECTION == 0 -> when {
                             changedDSensorTypes and DSensor.TYPE_MINUS_Y_AXIS_DIRECTION == 0 -> when {
                                 changedDSensorTypes and DSensor.TYPE_X_AXIS_DIRECTION == 0 -> processedSensorEvent.minusXAxisDirection
