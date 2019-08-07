@@ -36,97 +36,6 @@ class DSensorManager(context: Context) {
         return mRegisterResult.mErrorList
     }
 
-    /*fun startDProcessedSensor(context: Context,
-                              dProcessedSensorType: Int,
-                              dProcessedEventListener: DProcessedEventListener,
-                              sensorRate: Int = SensorManager.SENSOR_DELAY_NORMAL,
-                              historyMaxLength: Int = DEFAULT_HISTORY_SIZE): Boolean {
-        logger(DSensorManager::class.java.simpleName, "startDProcessedSensor($dProcessedSensorType)")
-        when (dProcessedSensorType) {
-            DProcessedSensor.TYPE_3D_COMPASS -> return onType3DCompassRegistered(context,
-                dProcessedEventListener, sensorRate, historyMaxLength)
-
-            DProcessedSensor.TYPE_COMPASS -> return onTypeCompassRegistered(context, dProcessedEventListener,
-                sensorRate, historyMaxLength)
-
-            DProcessedSensor.TYPE_3D_COMPASS_AND_DEPRECIATED_ORIENTATION -> return onType3DCompassAndOrientationRegistered(
-                context, dProcessedEventListener, sensorRate, historyMaxLength)
-
-            DProcessedSensor.TYPE_COMPASS_AND_DEPRECIATED_ORIENTATION -> return onTypeCompassAndOrientationRegistered(
-                context, dProcessedEventListener,  sensorRate, historyMaxLength)
-
-            else -> mRegisterResult.mErrorList.add(ERROR_UNSUPPORTED_TYPE)
-        }
-
-        return false
-    }*/
-
-    /*private fun onType3DCompassRegistered(context: Context, dProcessedEventListener: DProcessedEventListener,
-                                         sensorRate: Int = SensorManager.SENSOR_DELAY_NORMAL,
-                                         historyMaxLength: Int = DEFAULT_HISTORY_SIZE): Boolean {
-        val dSensorDirectionTypes = getCompassDirectionType(context) or DSensor.TYPE_MINUS_Z_AXIS_DIRECTION
-        logger(DSensorManager::class.java.simpleName, "onType3DCompassRegistered dSensorDirectionTypes = $dSensorDirectionTypes")
-        val flag = startDSensor(dSensorDirectionTypes, Compass3DSensorEventListener(dProcessedEventListener),
-            sensorRate, historyMaxLength)
-        if (!flag) {
-            stopDSensor()
-        }
-
-        return flag
-    }*/
-
-    /*private fun onTypeCompassRegistered(context: Context, dProcessedEventListener: DProcessedEventListener,
-                                        sensorRate: Int = SensorManager.SENSOR_DELAY_NORMAL,
-                                        historyMaxLength: Int = DEFAULT_HISTORY_SIZE): Boolean {
-        val dSensorDirectionTypes = getCompassDirectionType(context)
-        logger(DSensorManager::class.java.simpleName, "onTypeCompassRegistered dSensorDirectionTypes = $dSensorDirectionTypes")
-        val flag = startDSensor(dSensorDirectionTypes, CompassSensorEventListener(dProcessedEventListener),
-            sensorRate, historyMaxLength)
-        if (!flag) {
-            stopDSensor()
-        }
-
-        return flag
-    }*/
-
-    /*private fun onType3DCompassAndOrientationRegistered(context: Context, dProcessedEventListener: DProcessedEventListener,
-                                          sensorRate: Int = SensorManager.SENSOR_DELAY_NORMAL,
-                                          historyMaxLength: Int = DEFAULT_HISTORY_SIZE): Boolean {
-        val dSensorDirectionTypes =
-            getCompassDirectionType(context) or DSensor.TYPE_MINUS_Z_AXIS_DIRECTION or DSensor.TYPE_DEPRECIATED_ORIENTATION
-        logger(DSensorManager::class.java.simpleName, "onType3DCompassAndOrientationRegistered dSensorDirectionTypes = $dSensorDirectionTypes")
-        val flag = startDSensor(dSensorDirectionTypes, Compass3DAndOrientationSensorEventListener(dProcessedEventListener),
-            sensorRate, historyMaxLength)
-        if (!flag) {
-            stopDSensor()
-        }
-
-        return flag
-    }*/
-
-    /*private fun onTypeCompassAndOrientationRegistered(context: Context, dProcessedEventListener: DProcessedEventListener,
-                                                        sensorRate: Int = SensorManager.SENSOR_DELAY_NORMAL,
-                                                        historyMaxLength: Int = DEFAULT_HISTORY_SIZE): Boolean {
-        val dSensorDirectionTypes = getCompassDirectionType(context) or DSensor.TYPE_DEPRECIATED_ORIENTATION
-        logger(DSensorManager::class.java.simpleName, "onTypeCompassAndOrientationRegistered dSensorDirectionTypes = $dSensorDirectionTypes")
-        val flag = startDSensor(dSensorDirectionTypes, CompassAndOrientationSensorEventListener(dProcessedEventListener),
-            sensorRate, historyMaxLength)
-        if (!flag) {
-            stopDSensor()
-        }
-
-        return flag
-    }*/
-
-    /*private fun getCompassDirectionType(context: Context): Int {
-        return when((context.getSystemService(Context.WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation) {
-            Surface.ROTATION_90 -> DSensor.TYPE_X_AXIS_DIRECTION
-            Surface.ROTATION_180 -> DSensor.TYPE_MINUS_Y_AXIS_DIRECTION
-            Surface.ROTATION_270 -> DSensor.TYPE_MINUS_X_AXIS_DIRECTION
-            else -> DSensor.TYPE_Y_AXIS_DIRECTION
-        }
-    }*/
-
     /**
      * Start DSensor processing, processed results are in the DProcessedSensorEvent parameter of
      * onDSensorChanged method of the DSensorEventListener callback.
@@ -160,6 +69,11 @@ class DSensorManager(context: Context) {
 
         registerListener(dSensorTypes, sensorRate)
 
+        if (mRegisterResult.mSensorRegisteredList.isEmpty() && mRegisterResult.mErrorList.isEmpty()) {
+            mRegisterResult.mErrorList.add(ERROR_UNSUPPORTED_TYPE)
+            return false
+        }
+
         return mRegisterResult.mErrorList.isEmpty()
     }
 
@@ -180,7 +94,7 @@ class DSensorManager(context: Context) {
             registerListener(Sensor.TYPE_ROTATION_VECTOR, sensorRate, TYPE_ROTATION_VECTOR_NOT_AVAILABLE)
         }
 
-        if (dSensorTypes and DSensor.TYPE_DEPRECIATED_ORIENTATION != 0) {
+        if (dSensorTypes and DSensor.TYPE_DEPRECATED_ORIENTATION != 0) {
             registerListener(Sensor.TYPE_ORIENTATION, sensorRate, TYPE_ORIENTATION_NOT_AVAILABLE)
         }
 
@@ -302,111 +216,4 @@ class DSensorManager(context: Context) {
         val mErrorList = HashSet<Int>()
         val mSensorRegisteredList = HashSet<Int>()
     }
-
-    /*private class Compass3DSensorEventListener(private val dProcessedEventListener: DProcessedEventListener): DSensorEventListener {
-
-        override fun onDSensorChanged(changedDSensorTypes: Int, processedSensorEvent: DProcessedSensorEvent) {
-            val result: DSensorEvent? = when {
-                processedSensorEvent.minusZAxisDirection ==  null || processedSensorEvent.minusZAxisDirection!!.values[0].isNaN() -> when {
-                    changedDSensorTypes and DSensor.TYPE_Y_AXIS_DIRECTION == 0 -> when {
-                        changedDSensorTypes and DSensor.TYPE_MINUS_Y_AXIS_DIRECTION == 0 -> when {
-                            changedDSensorTypes and DSensor.TYPE_X_AXIS_DIRECTION == 0 -> processedSensorEvent.minusXAxisDirection
-                            else -> processedSensorEvent.xAxisDirection
-                        }
-                        else -> processedSensorEvent.minusYAxisDirection
-                    }
-                    else -> processedSensorEvent.yAxisDirection
-                }
-                else -> processedSensorEvent.minusZAxisDirection
-            }
-
-            if (result != null) {
-                dProcessedEventListener.onProcessedValueChanged(DSensorEvent(DProcessedSensor.TYPE_3D_COMPASS,
-                    result.accuracy, result.timestamp, result.values))
-            }
-        }
-    }
-
-    private class CompassSensorEventListener(private val dProcessedEventListener: DProcessedEventListener): DSensorEventListener {
-
-        override fun onDSensorChanged(changedDSensorTypes: Int, processedSensorEvent: DProcessedSensorEvent) {
-            val result: DSensorEvent? = when {
-                changedDSensorTypes and DSensor.TYPE_Y_AXIS_DIRECTION == 0 -> when {
-                    changedDSensorTypes and DSensor.TYPE_MINUS_Y_AXIS_DIRECTION == 0 -> when {
-                        changedDSensorTypes and DSensor.TYPE_X_AXIS_DIRECTION == 0 -> processedSensorEvent.minusXAxisDirection
-                        else -> processedSensorEvent.xAxisDirection
-                    }
-                    else -> processedSensorEvent.minusYAxisDirection
-                }
-                else -> processedSensorEvent.yAxisDirection
-            }
-
-            if (result != null) {
-                dProcessedEventListener.onProcessedValueChanged(DSensorEvent(DProcessedSensor.TYPE_COMPASS,
-                    result.accuracy, result.timestamp, result.values))
-            }
-        }
-    }
-
-    private class Compass3DAndOrientationSensorEventListener(private val dProcessedEventListener: DProcessedEventListener): DSensorEventListener {
-        override fun onDSensorChanged(changedDSensorTypes: Int, processedSensorEvent: DProcessedSensorEvent) {
-            val result: DSensorEvent? = when {
-                changedDSensorTypes and DSensor.TYPE_DEPRECIATED_ORIENTATION == 0 -> when {
-                    processedSensorEvent.minusZAxisDirection == null || processedSensorEvent.minusZAxisDirection!!.values[0].isNaN() -> when {
-                        changedDSensorTypes and DSensor.TYPE_Y_AXIS_DIRECTION == 0 -> when {
-                            changedDSensorTypes and DSensor.TYPE_MINUS_Y_AXIS_DIRECTION == 0 -> when {
-                                changedDSensorTypes and DSensor.TYPE_X_AXIS_DIRECTION == 0 -> processedSensorEvent.minusXAxisDirection
-                                else -> processedSensorEvent.xAxisDirection
-                            }
-                            else -> processedSensorEvent.minusYAxisDirection
-                        }
-                        else -> processedSensorEvent.yAxisDirection
-                    }
-                    else -> processedSensorEvent.minusZAxisDirection
-                }
-                else -> processedSensorEvent.depreciatedOrientation
-            }
-
-            if (result != null) {
-                val sensorType =
-                    if (changedDSensorTypes and DSensor.TYPE_DEPRECIATED_ORIENTATION == 0)
-                        DProcessedSensor.TYPE_3D_COMPASS
-                    else
-                        DSensor.TYPE_DEPRECIATED_ORIENTATION
-
-                dProcessedEventListener.onProcessedValueChanged(DSensorEvent(sensorType,
-                    result.accuracy, result.timestamp, result.values))
-            }
-        }
-    }
-
-    private class CompassAndOrientationSensorEventListener(private val dProcessedEventListener: DProcessedEventListener): DSensorEventListener {
-
-        override fun onDSensorChanged(changedDSensorTypes: Int, processedSensorEvent: DProcessedSensorEvent) {
-            val result: DSensorEvent? = when {
-                changedDSensorTypes and DSensor.TYPE_DEPRECIATED_ORIENTATION == 0 -> when {
-                    changedDSensorTypes and DSensor.TYPE_Y_AXIS_DIRECTION == 0 -> when {
-                        changedDSensorTypes and DSensor.TYPE_MINUS_Y_AXIS_DIRECTION == 0 -> when {
-                            changedDSensorTypes and DSensor.TYPE_X_AXIS_DIRECTION == 0 -> processedSensorEvent.minusXAxisDirection
-                            else -> processedSensorEvent.xAxisDirection
-                        }
-                        else -> processedSensorEvent.minusYAxisDirection
-                    }
-                    else -> processedSensorEvent.yAxisDirection
-                }
-                else -> processedSensorEvent.depreciatedOrientation
-            }
-
-            if (result != null) {
-                val sensorType =
-                    if (changedDSensorTypes and DSensor.TYPE_DEPRECIATED_ORIENTATION == 0)
-                        DProcessedSensor.TYPE_COMPASS
-                    else
-                        DSensor.TYPE_DEPRECIATED_ORIENTATION
-
-                dProcessedEventListener.onProcessedValueChanged(DSensorEvent(sensorType,
-                        result.accuracy, result.timestamp, result.values))
-            }
-        }
-    }*/
 }

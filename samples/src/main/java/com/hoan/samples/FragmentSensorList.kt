@@ -3,11 +3,10 @@ package com.hoan.samples
 import android.content.Context
 import android.os.Bundle
 import android.support.v4.app.Fragment
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.BaseExpandableListAdapter
 import android.widget.ExpandableListView
+import com.hoan.dsensor.DSensor
 import com.hoan.dsensor.DSensor.TYPE_DEVICE_ACCELEROMETER
 import com.hoan.dsensor.DSensor.TYPE_DEVICE_GRAVITY
 import com.hoan.dsensor.DSensor.TYPE_DEVICE_LINEAR_ACCELERATION
@@ -148,13 +147,31 @@ class FragmentSensorList : Fragment() {
                         else -> 0L
                     }
                 }
-                getString(R.string.compass) -> 0L
+                getString(R.string.compass) -> getDSensorTypes(getChild(groupPosition, childPosition))
                 else -> 0L
             }
         }
 
         override fun getGroupCount(): Int {
             return mListItemLinkedHashMap.size
+        }
+
+        private fun getDSensorTypes(compassType: String?): Long {
+            val sensorTypes = when((activity?.getSystemService(Context.WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation) {
+                Surface.ROTATION_90 -> DSensor.TYPE_X_AXIS_DIRECTION
+                Surface.ROTATION_180 -> DSensor.TYPE_MINUS_Y_AXIS_DIRECTION
+                Surface.ROTATION_270 -> DSensor.TYPE_MINUS_X_AXIS_DIRECTION
+                else -> DSensor.TYPE_Y_AXIS_DIRECTION
+            }
+
+            return when (compassType) {
+                getString(R.string.compass) -> sensorTypes.toLong()
+                getString(R.string.compass_and_deprecated_orientation) -> (sensorTypes or DSensor.TYPE_DEPRECATED_ORIENTATION).toLong()
+                getString(R.string.compass_3d) -> (sensorTypes or DSensor.TYPE_MINUS_Z_AXIS_DIRECTION).toLong()
+                getString(R.string.compass_3d_and_deprecated_orientation) ->
+                    (sensorTypes or DSensor.TYPE_MINUS_Z_AXIS_DIRECTION or DSensor.TYPE_DEPRECATED_ORIENTATION).toLong()
+                else -> 0L
+            }
         }
     }
 }

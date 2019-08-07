@@ -2,45 +2,32 @@ package com.hoan.samples
 
 
 import android.os.Bundle
-import android.support.v4.app.Fragment
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import com.hoan.dsensor.*
 import kotlinx.android.synthetic.main.fragment_compass.*
-import kotlinx.android.synthetic.main.fragment_compass.view.*
-import kotlinx.android.synthetic.main.fragment_compass.view.textview_orientation_value
 import kotlin.math.round
 import kotlin.math.roundToInt
 
-private const val DEPRECATED = "depreciated"
 
-/**
- * A simple [Fragment] subclass.
- * Use the [FragmentCompass.newInstance] factory method to
- * create an instance of this fragment.
- *
- */
 class FragmentCompass : BaseSensorFragment() {
 
     companion object {
         @JvmStatic
-        fun newInstance(sensorType: Int) =
+        fun newInstance(dSensorType: Int) =
             FragmentCompass().apply {
-                arguments = Bundle().apply {
-                    //putString(COMPASS_TYPE, compassType)
-                }
+                mSensorType = dSensorType
             }
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        val v = inflater.inflate(R.layout.fragment_compass, container, false)
-        /*if (COMPASS_3D_AND_DEPRECIATED_ORIENTATION == mCompassType || COMPASS_AND_DEPRECIATED_ORIENTATION == mCompassType) {
-            v.textview_orientation.visibility = View.VISIBLE
-            v.textview_orientation_value.visibility = View.VISIBLE
-        }*/
-        return v
+        return inflater.inflate(R.layout.fragment_compass, container, false)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        setOrientationViewsVisibility()
     }
 
     override fun onPause() {
@@ -54,16 +41,17 @@ class FragmentCompass : BaseSensorFragment() {
         super.onResume()
 
         Log.e("FragmentCompass", "onResume")
-        //startDProcessedSensor()
+        startSensor()
     }
 
-    /*override fun onSensorChanged(newSensorType: String) {
-        setOrientationViewsVisibility(newSensorType)
+    override fun onSensorChanged(newSensorType: Int) {
         super.onSensorChanged(newSensorType)
-    }*/
 
-    private fun setOrientationViewsVisibility(newSensorType: String) {
-        if (newSensorType.contains(DEPRECATED)) {
+        setOrientationViewsVisibility()
+    }
+
+    private fun setOrientationViewsVisibility() {
+        if ((mSensorType and DSensor.TYPE_DEPRECATED_ORIENTATION) != 0) {
             if (textview_orientation.visibility != View.VISIBLE) {
                 textview_orientation.visibility = View.VISIBLE
                 textview_orientation_value.visibility = View.VISIBLE
@@ -74,23 +62,47 @@ class FragmentCompass : BaseSensorFragment() {
         }
     }
 
-    /*override fun onProcessedValueChanged(dSensorEvent: DSensorEvent) {
-        //Log.e("FragmentCompass", "onProcessedValueChanged: type = ${dSensorEvent.sensorType} , value = ${dSensorEvent.values[0]}")
-        if (dSensorEvent.sensorType == DSensor.TYPE_DEPRECIATED_ORIENTATION) {
-            textview_orientation_value.text = round(dSensorEvent.values[0]).toString()
-        } else {
-            if (dSensorEvent.values[0].isNaN()) {
-                textview_compass_value.setText(R.string.device_not_flat_no_compass_value)
-            } else {
-                var valueInDegree = Math.toDegrees(dSensorEvent.values[0].toDouble()).roundToInt()
-                if (valueInDegree < 0) {
-                    valueInDegree = (valueInDegree + 360) % 360
+    override fun onDSensorChanged(changedDSensorTypes: Int, processedSensorEvent: DProcessedSensorEvent) {
+        when {
+            (DSensor.TYPE_DEPRECATED_ORIENTATION and changedDSensorTypes) != 0  -> {
+                val orientation = processedSensorEvent.depreciatedOrientation?.values?.get(0)
+                if (orientation != null) {
+                    textview_orientation_value.text = round(orientation).toString()
                 }
-                textview_compass_value.text = valueInDegree.toString()
+            }
+            else -> {
+                processedSensorEvent.minusZAxisDirection?.let {
+                    if (it.values[0].isFinite()) {
+                        var valueInDegree = Math.toDegrees(it.values[0].toDouble()).roundToInt()
+                        if (valueInDegree < 0) {
+                            valueInDegree = (valueInDegree + 360) % 360
+                        }
+                        textview_compass_value.text = valueInDegree.toString()
+                        return
+                    }
+                }
+                getDSensorEvent(processedSensorEvent)?.let {
+                    if (it.values[0].isFinite()) {
+                        textview_compass_value.text = it.values[0].toString()
+                    } else if (processedSensorEvent.minusZAxisDirection == null) {
+                        textview_compass_value.setText(R.string.device_not_flat_no_compass_value)
+                    }
+                }
             }
         }
-    }*/
-    override fun onDSensorChanged(changedDSensorTypes: Int, processedSensorEvent: DProcessedSensorEvent) {
+    }
 
+    private fun getDSensorEvent(dProcessedSensorEvent: DProcessedSensorEvent): DSensorEvent? {
+        return when {
+            (mSensorType or DSensor.TYPE_X_AXIS_DIRECTION) != 0 -> dProcessedSensorEvent.xAxisDirection
+            (mSensorType or DSensor.TYPE_MINUS_X_AXIS_DIRECTION) != 0 -> dProcessedSensorEvent.minusXAxisDirection
+            (mSensorType or DSensor.TYPE_Y_AXIS_DIRECTION) != 0 -> dProcessedSensorEvent.yAxisDirection
+            (mSensorType or DSensor.TYPE_MINUS_Y_AXIS_DIRECTION) != 0 -> dProcessedSensorEvent.minusYAxisDirection
+            else -> null
+        }
+    }
+
+    override fun showError(errorMessage: String?) {
+        textview_compass_value.text = errorMessage
     }
 }

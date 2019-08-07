@@ -24,14 +24,8 @@
 
     <string name="device_not_flat_no_compass_value">No compass value since device is not flat</string>
 
-    <string name="error_no_sensor">The required %Ss sensor is not available on this device</string>
-    <string name="error_no_sensors">The required %Ss sensors are not available on this device</string>
+    <string name="error_no_sensor">The required %S sensor is not available on this device</string>
+    <string name="error_no_sensors">The required %S sensors are not available on this device</string>
     <string name="error_unsupported_sensor">Unsupported sensor</string>
-    <string name="error_no_accelerometer_sensor">Fail to start. The required accelerometer sensor is not available on
-        this device
-    </string>
-    <string name="error_no_magnetic_field_sensor">Fail to start. The required magnetic field sensor is not available on
-        this device
-    </string>
 
 </resources>

@@ -253,10 +253,10 @@ class DSensorEventProcessor(dSensorTypes: Int,
 
     private fun onOrientationChanged(event: SensorEvent, dProcessedSensorEvent: DProcessedSensorEvent): Int {
         logger(DSensorEventProcessor::class.java.simpleName, "onOrientationChanged  angle = " + round(event.values[0]))
-        dProcessedSensorEvent.depreciatedOrientation = DSensorEvent(DSensor.TYPE_DEPRECIATED_ORIENTATION,
+        dProcessedSensorEvent.depreciatedOrientation = DSensorEvent(DSensor.TYPE_DEPRECATED_ORIENTATION,
                 event.accuracy, event.timestamp, event.values)
 
-        return DSensor.TYPE_DEPRECIATED_ORIENTATION
+        return DSensor.TYPE_DEPRECATED_ORIENTATION
     }
 
     private fun onGravityChanged(event: SensorEvent, dProcessedSensorEvent: DProcessedSensorEvent): Int {

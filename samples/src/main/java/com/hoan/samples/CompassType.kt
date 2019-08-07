@@ -4,7 +4,7 @@ package com.hoan.samples
  *
  * Compass
  */
-object DProcessedSensor {
+object CompassType {
 
     /**
      * This type returns the angle between the magnetic north and the projection
@@ -49,7 +49,7 @@ object DProcessedSensor {
      * Note: this type required the device to have sensor of TYPE_MAGNETIC_FIELD,
      * TYPE_ORIENTATION and TYPE_GRAVITY or TYPE_ACCELEROMETER
      */
-    const val TYPE_COMPASS_AND_DEPRECIATED_ORIENTATION = 100
+    const val TYPE_COMPASS_AND_DEPRECATED_ORIENTATION = 100
 
     /**
      * This is TYPE_3D_COMPASS and the depreciated TYPE_ORIENTATION.
@@ -61,5 +61,5 @@ object DProcessedSensor {
      * Note: this type required the device to have sensor of TYPE_MAGNETIC_FIELD,
      * TYPE_ORIENTATION and TYPE_GRAVITY or TYPE_ACCELEROMETER
      */
-    const val TYPE_3D_COMPASS_AND_DEPRECIATED_ORIENTATION = 101
+    const val TYPE_3D_COMPASS_AND_DEPRECATED_ORIENTATION = 101
 }

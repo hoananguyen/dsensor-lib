@@ -2,7 +2,6 @@ package com.hoan.samples
 
 
 import android.os.Bundle
-import android.support.v4.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -22,19 +21,14 @@ import kotlinx.android.synthetic.main.fragment_sensor_in_world_basis.view.*
 private const val DEVICE_COORDINATES = "device coordinates"
 private const val WORLD_COORDINATES = "world coordinates"
 
-/**
- * A simple [Fragment] subclass.
- *
- */
+
 class FragmentSensorInWorldCoord : BaseSensorFragment() {
 
     companion object {
         @JvmStatic
         fun newInstance(sensorType: Int) =
             FragmentSensorInWorldCoord().apply {
-                arguments = Bundle().apply {
-                    putInt(SENSOR_TYPE, sensorType)
-                }
+                mSensorType = sensorType
             }
     }
 
@@ -110,5 +104,9 @@ class FragmentSensorInWorldCoord : BaseSensorFragment() {
         }
 
         return resultHashMap
+    }
+
+    override fun showError(errorMessage: String?) {
+        textview_error.text = errorMessage
     }
 }
