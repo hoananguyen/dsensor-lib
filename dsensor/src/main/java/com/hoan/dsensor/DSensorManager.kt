@@ -3,12 +3,8 @@ package com.hoan.dsensor
 import android.content.Context
 import android.hardware.Sensor
 import android.hardware.SensorManager
-import android.os.Build
 import android.os.Handler
 import android.os.HandlerThread
-import android.view.Surface
-import android.view.WindowManager
-import com.hoan.dsensor.interfaces.DProcessedEventListener
 import com.hoan.dsensor.interfaces.DSensorEventListener
 import com.hoan.dsensor.utils.logger
 
@@ -40,7 +36,7 @@ class DSensorManager(context: Context) {
         return mRegisterResult.mErrorList
     }
 
-    fun startDProcessedSensor(context: Context,
+    /*fun startDProcessedSensor(context: Context,
                               dProcessedSensorType: Int,
                               dProcessedEventListener: DProcessedEventListener,
                               sensorRate: Int = SensorManager.SENSOR_DELAY_NORMAL,
@@ -63,9 +59,9 @@ class DSensorManager(context: Context) {
         }
 
         return false
-    }
+    }*/
 
-    private fun onType3DCompassRegistered(context: Context, dProcessedEventListener: DProcessedEventListener,
+    /*private fun onType3DCompassRegistered(context: Context, dProcessedEventListener: DProcessedEventListener,
                                          sensorRate: Int = SensorManager.SENSOR_DELAY_NORMAL,
                                          historyMaxLength: Int = DEFAULT_HISTORY_SIZE): Boolean {
         val dSensorDirectionTypes = getCompassDirectionType(context) or DSensor.TYPE_MINUS_Z_AXIS_DIRECTION
@@ -77,9 +73,9 @@ class DSensorManager(context: Context) {
         }
 
         return flag
-    }
+    }*/
 
-    private fun onTypeCompassRegistered(context: Context, dProcessedEventListener: DProcessedEventListener,
+    /*private fun onTypeCompassRegistered(context: Context, dProcessedEventListener: DProcessedEventListener,
                                         sensorRate: Int = SensorManager.SENSOR_DELAY_NORMAL,
                                         historyMaxLength: Int = DEFAULT_HISTORY_SIZE): Boolean {
         val dSensorDirectionTypes = getCompassDirectionType(context)
@@ -91,9 +87,9 @@ class DSensorManager(context: Context) {
         }
 
         return flag
-    }
+    }*/
 
-    private fun onType3DCompassAndOrientationRegistered(context: Context, dProcessedEventListener: DProcessedEventListener,
+    /*private fun onType3DCompassAndOrientationRegistered(context: Context, dProcessedEventListener: DProcessedEventListener,
                                           sensorRate: Int = SensorManager.SENSOR_DELAY_NORMAL,
                                           historyMaxLength: Int = DEFAULT_HISTORY_SIZE): Boolean {
         val dSensorDirectionTypes =
@@ -106,9 +102,9 @@ class DSensorManager(context: Context) {
         }
 
         return flag
-    }
+    }*/
 
-    private fun onTypeCompassAndOrientationRegistered(context: Context, dProcessedEventListener: DProcessedEventListener,
+    /*private fun onTypeCompassAndOrientationRegistered(context: Context, dProcessedEventListener: DProcessedEventListener,
                                                         sensorRate: Int = SensorManager.SENSOR_DELAY_NORMAL,
                                                         historyMaxLength: Int = DEFAULT_HISTORY_SIZE): Boolean {
         val dSensorDirectionTypes = getCompassDirectionType(context) or DSensor.TYPE_DEPRECIATED_ORIENTATION
@@ -120,16 +116,16 @@ class DSensorManager(context: Context) {
         }
 
         return flag
-    }
+    }*/
 
-    private fun getCompassDirectionType(context: Context): Int {
+    /*private fun getCompassDirectionType(context: Context): Int {
         return when((context.getSystemService(Context.WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation) {
             Surface.ROTATION_90 -> DSensor.TYPE_X_AXIS_DIRECTION
             Surface.ROTATION_180 -> DSensor.TYPE_MINUS_Y_AXIS_DIRECTION
             Surface.ROTATION_270 -> DSensor.TYPE_MINUS_X_AXIS_DIRECTION
             else -> DSensor.TYPE_Y_AXIS_DIRECTION
         }
-    }
+    }*/
 
     /**
      * Start DSensor processing, processed results are in the DProcessedSensorEvent parameter of
@@ -307,7 +303,7 @@ class DSensorManager(context: Context) {
         val mSensorRegisteredList = HashSet<Int>()
     }
 
-    private class Compass3DSensorEventListener(private val dProcessedEventListener: DProcessedEventListener): DSensorEventListener {
+    /*private class Compass3DSensorEventListener(private val dProcessedEventListener: DProcessedEventListener): DSensorEventListener {
 
         override fun onDSensorChanged(changedDSensorTypes: Int, processedSensorEvent: DProcessedSensorEvent) {
             val result: DSensorEvent? = when {
@@ -412,5 +408,5 @@ class DSensorManager(context: Context) {
                         result.accuracy, result.timestamp, result.values))
             }
         }
-    }
+    }*/
 }
