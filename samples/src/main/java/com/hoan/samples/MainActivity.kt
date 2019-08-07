@@ -23,10 +23,7 @@ class MainActivity : AppCompatActivity(), FragmentSensorList.OnFragmentInteracti
     override fun onGroupItemSelected(item: String?) {
         logger(MainActivity::class.java.simpleName, "onGroupItemSelected: item = $item")
         if (getString(R.string.sensors_info) == item) {
-            if (supportFragmentManager.findFragmentByTag(FragmentSensorInfo::class.java.simpleName) != null) {
-                logger(MainActivity::class.java.simpleName, "onGroupItemSelected: FragmentSensorInfo is not null")
-                return
-            }
+            if (supportFragmentManager.findFragmentByTag(FragmentSensorInfo::class.java.simpleName) != null) return
 
             val backStackCount = supportFragmentManager.backStackEntryCount
             logger(MainActivity::class.java.simpleName, "onGroupItemSelected: backStack count = $backStackCount")

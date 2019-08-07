@@ -2,7 +2,6 @@ package com.hoan.samples
 
 
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import com.hoan.dsensor.*
 import kotlinx.android.synthetic.main.fragment_compass.*
@@ -31,7 +30,6 @@ class FragmentCompass : BaseSensorFragment() {
     }
 
     override fun onPause() {
-        Log.e("FragmentCompass", "onPause")
         stopSensor()
 
         super.onPause()
@@ -40,7 +38,6 @@ class FragmentCompass : BaseSensorFragment() {
     override fun onResume() {
         super.onResume()
 
-        Log.e("FragmentCompass", "onResume")
         startSensor()
     }
 
