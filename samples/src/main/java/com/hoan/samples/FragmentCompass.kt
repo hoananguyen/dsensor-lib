@@ -71,9 +71,9 @@ class FragmentCompass : BaseSensorFragment() {
                 }
             }
             else -> {
-                processedSensorEvent.minusZAxisDirection?.let {
-                    if (it.values[0].isFinite()) {
-                        var valueInDegree = Math.toDegrees(it.values[0].toDouble()).roundToInt()
+                processedSensorEvent.minusZAxisDirection?.apply {
+                    if (values[0].isFinite()) {
+                        var valueInDegree = Math.toDegrees(values[0].toDouble()).roundToInt()
                         if (valueInDegree < 0) {
                             valueInDegree = (valueInDegree + 360) % 360
                         }
@@ -81,9 +81,9 @@ class FragmentCompass : BaseSensorFragment() {
                         return
                     }
                 }
-                getDSensorEvent(processedSensorEvent)?.let {
-                    if (it.values[0].isFinite()) {
-                        textview_compass_value.text = it.values[0].toString()
+                getDSensorEvent(processedSensorEvent)?.apply {
+                    if (values[0].isFinite()) {
+                        textview_compass_value.text = values[0].toString()
                     } else if (processedSensorEvent.minusZAxisDirection == null) {
                         textview_compass_value.setText(R.string.device_not_flat_no_compass_value)
                     }

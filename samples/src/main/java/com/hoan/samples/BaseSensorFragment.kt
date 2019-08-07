@@ -6,10 +6,7 @@ import com.hoan.dsensor.*
 import com.hoan.dsensor.interfaces.DSensorEventListener
 import com.hoan.dsensor.utils.logger
 
-/**
- * A simple [Fragment] subclass.
- *
- */
+
 abstract class BaseSensorFragment : Fragment(), DSensorEventListener {
 
     protected var mSensorType: Int = 0
@@ -28,16 +25,21 @@ abstract class BaseSensorFragment : Fragment(), DSensorEventListener {
 
     fun stopSensor() {
         logger(BaseSensorFragment::class.java.simpleName, "stopSensor")
-        mDSensorManager?.stopDSensor()
+        mDSensorManager?.apply { stopDSensor() }
         mDSensorManager = null
     }
 
     fun startSensor() {
         logger(BaseSensorFragment::class.java.simpleName, "startSensor")
-        mDSensorManager = DSensorManager(context!!)
-        if (!mDSensorManager!!.startDSensor(mSensorType, this)) {
-            showError(getErrorMessage(mDSensorManager?.getErrors() ?: HashSet()))
-            stopSensor()
+        context?.let {
+            mDSensorManager = DSensorManager(it)
+        }
+
+        mDSensorManager?.let {
+            if (!it.startDSensor(mSensorType, this)) {
+                showError(getErrorMessage(it.getErrors()))
+                stopSensor()
+            }
         }
     }
 
@@ -66,7 +68,12 @@ abstract class BaseSensorFragment : Fragment(), DSensorEventListener {
         errorMessage = errorMessage.substringBeforeLast(" & ")
 
         errorMessage = when {
-            !errorMessage.contains("&") -> getString(R.string.error_no_sensor, errorMessage)
+            !errorMessage.contains("&") -> {
+                when {
+                    errors.contains(ERROR_UNSUPPORTED_TYPE) -> getString(R.string.error_unsupported_sensor)
+                    else -> getString(R.string.error_no_sensor, errorMessage)
+                }
+            }
             else -> getString(R.string.error_no_sensors, errorMessage)
         }
 

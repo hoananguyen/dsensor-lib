@@ -29,7 +29,8 @@ class FragmentSensorList : Fragment() {
 
         v.sensor_expandablelistview.setAdapter(SensorExpandableListAdapter())
 
-        v.sensor_expandablelistview.setOnChildClickListener { parent: ExpandableListView, _: View?, groupPosition: Int, childPosition: Int, id: Long ->
+        v.sensor_expandablelistview.setOnChildClickListener {
+                parent: ExpandableListView, _: View?, groupPosition: Int, childPosition: Int, id: Long ->
                 val group = (parent.expandableListAdapter as SensorExpandableListAdapter).getGroup(groupPosition)
                 if (id != 0L && group != null) {
                     mFragmentInteractionListener?.onChildItemSelected(group, id.toInt())
@@ -39,14 +40,14 @@ class FragmentSensorList : Fragment() {
                 true
             }
 
-        v.sensor_expandablelistview.setOnGroupClickListener { parent: ExpandableListView?, _: View?, groupPosition: Int, _: Long ->
+        v.sensor_expandablelistview.setOnGroupClickListener { parent: ExpandableListView, _: View?, groupPosition: Int, _: Long ->
 
                 when (groupPosition) {
                     0-> mFragmentInteractionListener?.onGroupItemSelected(
-                        (parent?.expandableListAdapter as SensorExpandableListAdapter).getGroup(groupPosition))
+                        (parent.expandableListAdapter as SensorExpandableListAdapter).getGroup(groupPosition))
                     else -> when {
-                        parent?.isGroupExpanded(groupPosition) == true -> parent.collapseGroup(groupPosition)
-                        else -> parent?.expandGroup(groupPosition)
+                        parent.isGroupExpanded(groupPosition) -> parent.collapseGroup(groupPosition)
+                        else -> parent.expandGroup(groupPosition)
                     }
                 }
 
@@ -77,11 +78,6 @@ class FragmentSensorList : Fragment() {
 
         init {
             mListItemLinkedHashMap[getString(R.string.sensors_info)] = null
-            /*mListItemLinkedHashMap[getString(R.string.compass)] = arrayListOf(getString(R.string.compass),
-                getString(R.string.compass_3d), getString(R.string.compass_and_deprecated_orientation),
-                getString(R.string.compass_3d_and_deprecated_orientation))
-            mListItemLinkedHashMap[getString(R.string.sensor_in_world_coord)] = arrayListOf(getString(R.string.accelerometer),
-                getString(R.string.gravity), getString(R.string.linear_acceleration), getString(R.string.magnetic_field))*/
             mListItemLinkedHashMap[getString(R.string.compass)] = arrayListOf(CompassType.TYPE_COMPASS, CompassType.TYPE_3D_COMPASS,
                 CompassType.TYPE_COMPASS_AND_DEPRECATED_ORIENTATION, CompassType.TYPE_3D_COMPASS_AND_DEPRECATED_ORIENTATION)
             mListItemLinkedHashMap[getString(R.string.sensor_in_world_coord)] =
@@ -92,11 +88,10 @@ class FragmentSensorList : Fragment() {
         }
 
         override fun getGroup(groupPosition: Int): String? {
-            if (groupPosition >= mListItemLinkedHashMap.size) {
-                return null
+            return when {
+                groupPosition >= mListItemLinkedHashMap.size -> null
+                else -> mListItemLinkedHashMap.keys.toList()[groupPosition]
             }
-
-            return mListItemLinkedHashMap.keys.toList()[groupPosition]
         }
 
         override fun isChildSelectable(groupPosition: Int, childPosition: Int): Boolean {
@@ -110,7 +105,7 @@ class FragmentSensorList : Fragment() {
         override fun getGroupView(groupPosition: Int, isExpanded: Boolean, convertView: View?, parent: ViewGroup?): View? {
             val v: View = convertView ?: activity!!.layoutInflater.inflate(R.layout.simple_expandable_list_item, parent, false)
 
-            v.item_textview.text = getGroup(groupPosition)
+            v.item_textview.text = getGroup(groupPosition) ?: ""
 
             return v
         }
@@ -143,7 +138,7 @@ class FragmentSensorList : Fragment() {
         override fun getChildId(groupPosition: Int, childPosition: Int): Long {
             return when (getGroup(groupPosition)) {
                 getString(R.string.sensor_in_world_coord) -> getChild(groupPosition, childPosition)?.toLong() ?: 0L
-                getString(R.string.compass) -> getDSensorTypes(getChild(groupPosition, childPosition))
+                getString(R.string.compass) -> getDSensorTypes(context, getChild(groupPosition, childPosition)).toLong()
                 else -> 0L
             }
         }
@@ -171,24 +166,6 @@ class FragmentSensorList : Fragment() {
                 CompassType.TYPE_3D_COMPASS -> getString(R.string.compass_3d)
                 CompassType.TYPE_3D_COMPASS_AND_DEPRECATED_ORIENTATION -> getString(R.string.compass_3d_and_deprecated_orientation)
                 else -> ""
-            }
-        }
-
-        private fun getDSensorTypes(compassType: Int?): Long {
-            val sensorTypes = when((activity?.getSystemService(Context.WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation) {
-                Surface.ROTATION_90 -> DSensor.TYPE_X_AXIS_DIRECTION
-                Surface.ROTATION_180 -> DSensor.TYPE_MINUS_Y_AXIS_DIRECTION
-                Surface.ROTATION_270 -> DSensor.TYPE_MINUS_X_AXIS_DIRECTION
-                else -> DSensor.TYPE_Y_AXIS_DIRECTION
-            }
-
-            return when (compassType) {
-                CompassType.TYPE_COMPASS -> sensorTypes.toLong()
-                CompassType.TYPE_COMPASS_AND_DEPRECATED_ORIENTATION -> (sensorTypes or DSensor.TYPE_DEPRECATED_ORIENTATION).toLong()
-                CompassType.TYPE_3D_COMPASS -> (sensorTypes or DSensor.TYPE_MINUS_Z_AXIS_DIRECTION).toLong()
-                CompassType.TYPE_3D_COMPASS_AND_DEPRECATED_ORIENTATION ->
-                    (sensorTypes or DSensor.TYPE_MINUS_Z_AXIS_DIRECTION or DSensor.TYPE_DEPRECATED_ORIENTATION).toLong()
-                else -> 0L
             }
         }
     }

@@ -1,5 +1,30 @@
 package com.hoan.samples
 
+import android.content.Context
+import android.view.Surface
+import android.view.WindowManager
+import com.hoan.dsensor.DSensor
+
+fun getDSensorTypes(context: Context?, compassType: Int?): Int {
+    if (context == null) return 0
+
+    val sensorTypes = when((context.getSystemService(Context.WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation) {
+        Surface.ROTATION_90 -> DSensor.TYPE_X_AXIS_DIRECTION
+        Surface.ROTATION_180 -> DSensor.TYPE_MINUS_Y_AXIS_DIRECTION
+        Surface.ROTATION_270 -> DSensor.TYPE_MINUS_X_AXIS_DIRECTION
+        else -> DSensor.TYPE_Y_AXIS_DIRECTION
+    }
+
+    return when (compassType) {
+        CompassType.TYPE_COMPASS -> sensorTypes
+        CompassType.TYPE_COMPASS_AND_DEPRECATED_ORIENTATION -> sensorTypes or DSensor.TYPE_DEPRECATED_ORIENTATION
+        CompassType.TYPE_3D_COMPASS -> sensorTypes or DSensor.TYPE_MINUS_Z_AXIS_DIRECTION
+        CompassType.TYPE_3D_COMPASS_AND_DEPRECATED_ORIENTATION ->
+            sensorTypes or DSensor.TYPE_MINUS_Z_AXIS_DIRECTION or DSensor.TYPE_DEPRECATED_ORIENTATION
+        else -> 0
+    }
+}
+
 /**
  *
  * Compass

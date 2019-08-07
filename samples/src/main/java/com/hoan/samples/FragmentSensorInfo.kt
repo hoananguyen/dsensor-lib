@@ -66,11 +66,6 @@ class FragmentSensorInfo : Fragment() {
         return v
     }
 
-    override fun onDestroy() {
-        logger(FragmentSensorInfo::class.java.simpleName, "onDestroy")
-        super.onDestroy()
-    }
-
     private fun getSensorInfo(): SpannableStringBuilder {
         logger(FragmentSensorInfo::class.java.simpleName, "getSensorInfo")
         val builder = SpannableStringBuilder()
