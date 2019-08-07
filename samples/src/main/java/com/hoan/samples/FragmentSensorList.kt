@@ -7,14 +7,6 @@ import android.view.*
 import android.widget.BaseExpandableListAdapter
 import android.widget.ExpandableListView
 import com.hoan.dsensor.DSensor
-import com.hoan.dsensor.DSensor.TYPE_DEVICE_ACCELEROMETER
-import com.hoan.dsensor.DSensor.TYPE_DEVICE_GRAVITY
-import com.hoan.dsensor.DSensor.TYPE_DEVICE_LINEAR_ACCELERATION
-import com.hoan.dsensor.DSensor.TYPE_DEVICE_MAGNETIC_FIELD
-import com.hoan.dsensor.DSensor.TYPE_WORLD_ACCELEROMETER
-import com.hoan.dsensor.DSensor.TYPE_WORLD_GRAVITY
-import com.hoan.dsensor.DSensor.TYPE_WORLD_LINEAR_ACCELERATION
-import com.hoan.dsensor.DSensor.TYPE_WORLD_MAGNETIC_FIELD
 import com.hoan.dsensor.utils.logger
 import kotlinx.android.synthetic.main.fragment_sensor_list.view.*
 import kotlinx.android.synthetic.main.sensor_expandable_list_child_item.view.*
@@ -81,15 +73,22 @@ class FragmentSensorList : Fragment() {
     }
 
     private inner class SensorExpandableListAdapter : BaseExpandableListAdapter() {
-        private val mListItemLinkedHashMap: LinkedHashMap<String, List<String>?> = LinkedHashMap()
+        private val mListItemLinkedHashMap: LinkedHashMap<String, List<Int>?> = LinkedHashMap()
 
         init {
             mListItemLinkedHashMap[getString(R.string.sensors_info)] = null
-            mListItemLinkedHashMap[getString(R.string.compass)] = arrayListOf(getString(R.string.compass),
+            /*mListItemLinkedHashMap[getString(R.string.compass)] = arrayListOf(getString(R.string.compass),
                 getString(R.string.compass_3d), getString(R.string.compass_and_deprecated_orientation),
                 getString(R.string.compass_3d_and_deprecated_orientation))
             mListItemLinkedHashMap[getString(R.string.sensor_in_world_coord)] = arrayListOf(getString(R.string.accelerometer),
-                getString(R.string.gravity), getString(R.string.linear_acceleration), getString(R.string.magnetic_field))
+                getString(R.string.gravity), getString(R.string.linear_acceleration), getString(R.string.magnetic_field))*/
+            mListItemLinkedHashMap[getString(R.string.compass)] = arrayListOf(CompassType.TYPE_COMPASS, CompassType.TYPE_3D_COMPASS,
+                CompassType.TYPE_COMPASS_AND_DEPRECATED_ORIENTATION, CompassType.TYPE_3D_COMPASS_AND_DEPRECATED_ORIENTATION)
+            mListItemLinkedHashMap[getString(R.string.sensor_in_world_coord)] =
+                arrayListOf(DSensor.TYPE_DEVICE_ACCELEROMETER or DSensor.TYPE_WORLD_ACCELEROMETER,
+                    DSensor.TYPE_DEVICE_GRAVITY or DSensor.TYPE_WORLD_GRAVITY,
+                    DSensor.TYPE_DEVICE_LINEAR_ACCELERATION or DSensor.TYPE_WORLD_LINEAR_ACCELERATION,
+                    DSensor.TYPE_DEVICE_MAGNETIC_FIELD or DSensor.TYPE_WORLD_MAGNETIC_FIELD)
         }
 
         override fun getGroup(groupPosition: Int): String? {
@@ -120,7 +119,7 @@ class FragmentSensorList : Fragment() {
             return mListItemLinkedHashMap.values.toList()[groupPosition]?.size ?: 0
         }
 
-        override fun getChild(groupPosition: Int, childPosition: Int): String? {
+        override fun getChild(groupPosition: Int, childPosition: Int): Int? {
             return mListItemLinkedHashMap[getGroup(groupPosition)]?.get(childPosition)
         }
 
@@ -131,22 +130,19 @@ class FragmentSensorList : Fragment() {
         override fun getChildView(groupPosition: Int, childPosition: Int, isLastChild: Boolean, convertView: View?, parent: ViewGroup?): View? {
             val v: View = convertView ?: activity!!.layoutInflater.inflate(R.layout.sensor_expandable_list_child_item, parent, false)
 
-            v.textview_child_item.text = getChild(groupPosition, childPosition)
+            val childItemName = when (getGroup(groupPosition)) {
+                getString(R.string.sensor_in_world_coord) -> getSensorInWorldCoordName(getChild(groupPosition, childPosition))
+                getString(R.string.compass) -> getCompassName(getChild(groupPosition, childPosition))
+                else -> ""
+            }
+            v.textview_child_item.text = childItemName
 
             return v
         }
 
         override fun getChildId(groupPosition: Int, childPosition: Int): Long {
             return when (getGroup(groupPosition)) {
-                getString(R.string.sensor_in_world_coord) -> {
-                    when (getChild(groupPosition, childPosition)) {
-                        getString(R.string.accelerometer) -> (TYPE_DEVICE_ACCELEROMETER or TYPE_WORLD_ACCELEROMETER).toLong()
-                        getString(R.string.gravity) -> (TYPE_DEVICE_GRAVITY or TYPE_WORLD_GRAVITY).toLong()
-                        getString(R.string.linear_acceleration) -> (TYPE_DEVICE_LINEAR_ACCELERATION or TYPE_WORLD_LINEAR_ACCELERATION).toLong()
-                        getString(R.string.magnetic_field) -> (TYPE_DEVICE_MAGNETIC_FIELD or TYPE_WORLD_MAGNETIC_FIELD).toLong()
-                        else -> 0L
-                    }
-                }
+                getString(R.string.sensor_in_world_coord) -> getChild(groupPosition, childPosition)?.toLong() ?: 0L
                 getString(R.string.compass) -> getDSensorTypes(getChild(groupPosition, childPosition))
                 else -> 0L
             }
@@ -156,7 +152,29 @@ class FragmentSensorList : Fragment() {
             return mListItemLinkedHashMap.size
         }
 
-        private fun getDSensorTypes(compassType: String?): Long {
+        private fun getSensorInWorldCoordName(dSensorTypes: Int?): String {
+            if (dSensorTypes == null) return ""
+
+            return when {
+                dSensorTypes and DSensor.TYPE_DEVICE_ACCELEROMETER != 0 -> getString(R.string.accelerometer)
+                dSensorTypes and DSensor.TYPE_DEVICE_GRAVITY != 0 -> getString(R.string.gravity)
+                dSensorTypes and DSensor.TYPE_DEVICE_LINEAR_ACCELERATION != 0 -> getString(R.string.linear_acceleration)
+                dSensorTypes and DSensor.TYPE_DEVICE_MAGNETIC_FIELD != 0 -> getString(R.string.magnetic_field)
+                else -> ""
+            }
+        }
+
+        private fun getCompassName(compassType: Int?): String {
+            return when (compassType) {
+                CompassType.TYPE_COMPASS -> getString(R.string.compass)
+                CompassType.TYPE_COMPASS_AND_DEPRECATED_ORIENTATION -> getString(R.string.compass_and_deprecated_orientation)
+                CompassType.TYPE_3D_COMPASS -> getString(R.string.compass_3d)
+                CompassType.TYPE_3D_COMPASS_AND_DEPRECATED_ORIENTATION -> getString(R.string.compass_3d_and_deprecated_orientation)
+                else -> ""
+            }
+        }
+
+        private fun getDSensorTypes(compassType: Int?): Long {
             val sensorTypes = when((activity?.getSystemService(Context.WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation) {
                 Surface.ROTATION_90 -> DSensor.TYPE_X_AXIS_DIRECTION
                 Surface.ROTATION_180 -> DSensor.TYPE_MINUS_Y_AXIS_DIRECTION
@@ -165,10 +183,10 @@ class FragmentSensorList : Fragment() {
             }
 
             return when (compassType) {
-                getString(R.string.compass) -> sensorTypes.toLong()
-                getString(R.string.compass_and_deprecated_orientation) -> (sensorTypes or DSensor.TYPE_DEPRECATED_ORIENTATION).toLong()
-                getString(R.string.compass_3d) -> (sensorTypes or DSensor.TYPE_MINUS_Z_AXIS_DIRECTION).toLong()
-                getString(R.string.compass_3d_and_deprecated_orientation) ->
+                CompassType.TYPE_COMPASS -> sensorTypes.toLong()
+                CompassType.TYPE_COMPASS_AND_DEPRECATED_ORIENTATION -> (sensorTypes or DSensor.TYPE_DEPRECATED_ORIENTATION).toLong()
+                CompassType.TYPE_3D_COMPASS -> (sensorTypes or DSensor.TYPE_MINUS_Z_AXIS_DIRECTION).toLong()
+                CompassType.TYPE_3D_COMPASS_AND_DEPRECATED_ORIENTATION ->
                     (sensorTypes or DSensor.TYPE_MINUS_Z_AXIS_DIRECTION or DSensor.TYPE_DEPRECATED_ORIENTATION).toLong()
                 else -> 0L
             }

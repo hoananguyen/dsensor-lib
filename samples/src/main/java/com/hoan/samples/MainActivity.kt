@@ -1,10 +1,9 @@
 package com.hoan.samples
 
-import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentTransaction
-import android.util.Log
+import android.support.v7.app.AppCompatActivity
 import com.hoan.dsensor.utils.logger
 import kotlinx.android.synthetic.main.content_main.*
 
