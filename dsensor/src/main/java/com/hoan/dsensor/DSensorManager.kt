@@ -132,8 +132,8 @@ class DSensorManager(context: Context) {
                 registerListener(Sensor.TYPE_ACCELEROMETER, sensorRate, TYPE_ACCELEROMETER_NOT_AVAILABLE)
             }
 
-            registerGravityListener(sensorRate)
             if (mRegisterResult.mSensorRegisteredList.contains(Sensor.TYPE_ACCELEROMETER)) {
+                registerGravityListener(sensorRate)
                 mRegisterResult.mErrorList.remove(TYPE_LINEAR_ACCELERATION_NOT_AVAILABLE)
                 mRegisterResult.mSensorRegisteredList.add(Sensor.TYPE_LINEAR_ACCELERATION)
             }
@@ -175,11 +175,12 @@ class DSensorManager(context: Context) {
     fun stopDSensor() {
         logger(DSensorManager::class.java.simpleName, "stopDSensor")
 
-        if (mDSensorEventProcessor != null) {
-            mDSensorEventProcessor?.finish()
-            mSensorManager.unregisterListener(mDSensorEventProcessor)
-            mDSensorEventProcessor = null
+        mDSensorEventProcessor?.run {
+            finish()
+            mSensorManager.unregisterListener(this)
         }
+
+        mDSensorEventProcessor = null
 
         if (mSensorThread.isAlive) {
             mSensorThread.quit()
@@ -192,10 +193,10 @@ class DSensorManager(context: Context) {
      * @return true if dSensorTypes is of TYPE_WORLD_*
      */
     private fun worldTypesRegistered(dSensorTypes: Int): Boolean {
-        return (dSensorTypes and DSensor.TYPE_WORLD_ACCELEROMETER == 0
-                && dSensorTypes and DSensor.TYPE_WORLD_GRAVITY == 0
-                && dSensorTypes and DSensor.TYPE_WORLD_MAGNETIC_FIELD == 0
-                && dSensorTypes and DSensor.TYPE_WORLD_LINEAR_ACCELERATION == 0)
+        return (dSensorTypes and DSensor.TYPE_WORLD_ACCELEROMETER != 0
+                || dSensorTypes and DSensor.TYPE_WORLD_GRAVITY != 0
+                || dSensorTypes and DSensor.TYPE_WORLD_MAGNETIC_FIELD != 0
+                || dSensorTypes and DSensor.TYPE_WORLD_LINEAR_ACCELERATION != 0)
     }
 
     /**
@@ -204,12 +205,12 @@ class DSensorManager(context: Context) {
      * @return true if dSensorTypes is of TYPE_*_DIRECTION
      */
     private fun directionTypesRegistered(dSensorTypes: Int): Boolean {
-        return (dSensorTypes and DSensor.TYPE_Z_AXIS_DIRECTION == 0
-                && dSensorTypes and DSensor.TYPE_MINUS_Z_AXIS_DIRECTION == 0
-                && dSensorTypes and DSensor.TYPE_X_AXIS_DIRECTION == 0
-                && dSensorTypes and DSensor.TYPE_MINUS_X_AXIS_DIRECTION == 0
-                && dSensorTypes and DSensor.TYPE_Y_AXIS_DIRECTION == 0
-                && dSensorTypes and DSensor.TYPE_MINUS_Y_AXIS_DIRECTION == 0)
+        return (dSensorTypes and DSensor.TYPE_Z_AXIS_DIRECTION != 0
+                || dSensorTypes and DSensor.TYPE_MINUS_Z_AXIS_DIRECTION != 0
+                || dSensorTypes and DSensor.TYPE_X_AXIS_DIRECTION != 0
+                || dSensorTypes and DSensor.TYPE_MINUS_X_AXIS_DIRECTION != 0
+                || dSensorTypes and DSensor.TYPE_Y_AXIS_DIRECTION != 0
+                || dSensorTypes and DSensor.TYPE_MINUS_Y_AXIS_DIRECTION != 0)
     }
 
     private class RegisterResult {
