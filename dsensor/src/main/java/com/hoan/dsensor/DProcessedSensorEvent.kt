@@ -29,27 +29,27 @@ class DProcessedSensorEvent(var accelerometerInDeviceBasis: DSensorEvent? = null
     override fun toString(): String {
         val sb = StringBuilder()
 
-        accelerometerInDeviceBasis?.let { sb.append(accelerometerInDeviceBasis.toString()) }
-        accelerometerInWorldBasis?.let { sb.append(accelerometerInWorldBasis.toString()) }
-        gravityInDeviceBasis?.let { sb.append(gravityInDeviceBasis.toString()) }
-        gravityInWorldBasis?.let { sb.append(gravityInWorldBasis.toString()) }
-        magneticFieldInDeviceBasis?.let { sb.append(magneticFieldInDeviceBasis.toString()) }
-        magneticFieldInWorldBasis?.let { sb.append(magneticFieldInWorldBasis.toString()) }
-        linearAccelerationInDeviceBasis?.let { sb.append(linearAccelerationInDeviceBasis.toString()) }
-        linearAccelerationInWorldBasis?.let { sb.append(linearAccelerationInWorldBasis.toString()) }
-        gyroscope?.let { sb.append(gyroscope.toString()) }
-        rotationVector?.let { sb.append(rotationVector.toString()) }
-        depreciatedOrientation?.let { sb.append(depreciatedOrientation.toString()) }
-        inclination?.let { sb.append(inclination.toString()) }
-        deviceRotation?.let { sb.append(deviceRotation.toString()) }
-        pitch?.let { sb.append(pitch.toString()) }
-        roll?.let { sb.append(roll.toString()) }
-        xAxisDirection?.let { sb.append(xAxisDirection.toString()) }
-        minusXAxisDirection?.let { sb.append(minusXAxisDirection.toString()) }
-        yAxisDirection?.let { sb.append(yAxisDirection.toString()) }
-        minusYAxisDirection?.let { sb.append(minusYAxisDirection.toString()) }
-        zAxisDirection?.let { sb.append(zAxisDirection.toString()) }
-        minusZAxisDirection?.let { sb.append(minusZAxisDirection.toString()) }
+        accelerometerInDeviceBasis?.let { sb.append(it.toString()) }
+        accelerometerInWorldBasis?.let { sb.append(it.toString()) }
+        gravityInDeviceBasis?.let { sb.append(it.toString()) }
+        gravityInWorldBasis?.let { sb.append(it.toString()) }
+        magneticFieldInDeviceBasis?.let { sb.append(it.toString()) }
+        magneticFieldInWorldBasis?.let { sb.append(it.toString()) }
+        linearAccelerationInDeviceBasis?.let { sb.append(it.toString()) }
+        linearAccelerationInWorldBasis?.let { sb.append(it.toString()) }
+        gyroscope?.let { sb.append(it.toString()) }
+        rotationVector?.let { sb.append(it.toString()) }
+        depreciatedOrientation?.let { sb.append(it.toString()) }
+        inclination?.let { sb.append(it.toString()) }
+        deviceRotation?.let { sb.append(it.toString()) }
+        pitch?.let { sb.append(it.toString()) }
+        roll?.let { sb.append(it.toString()) }
+        xAxisDirection?.let { sb.append(it.toString()) }
+        minusXAxisDirection?.let { sb.append(it.toString()) }
+        yAxisDirection?.let { sb.append(it.toString()) }
+        minusYAxisDirection?.let { sb.append(it.toString()) }
+        zAxisDirection?.let { sb.append(it.toString()) }
+        minusZAxisDirection?.let { sb.append(it.toString()) }
 
         return sb.toString()
     }
