@@ -40,7 +40,7 @@ class DSensorEventProcessor(dSensorTypes: Int,
 
     /**
      * Flag to indicate device has TYPE_ROTATION_VECTOR. If value is true then
-     * data processing is done when onSensorChanged is of TYPE_ROTATION_VECTOR.
+     * data processing involving rotation matrix is done when onSensorChanged is of TYPE_ROTATION_VECTOR.
      */
     private val mHasRotationVectorSensor: Boolean = hasRotationVectorSensor
 
@@ -54,12 +54,12 @@ class DSensorEventProcessor(dSensorTypes: Int,
      * Flag to indicate device has TYPE_LINEAR_ACCELERATION. If needed and the value is
      * false then calculate from accelerometer and gravity.
      */
-    private val mHasLinearAccelerationSensor: Boolean = hasLinearAccelerationSensor
+    //private val mHasLinearAccelerationSensor: Boolean = hasLinearAccelerationSensor
 
-    private val mDSensorEventListener: DSensorEventListener = dSensorEventListener
+    private var mDSensorEventListener: DSensorEventListener? = dSensorEventListener
 
-    private var mUIHandler: Handler?
-    private val mPostEventRunnable = PostEventRunnable()
+    //private var mUIHandler: Handler?
+    //private val mPostEventRunnable = PostEventRunnable()
 
     /**
      * List to keep history directions of compass for averaging.
@@ -74,9 +74,9 @@ class DSensorEventProcessor(dSensorTypes: Int,
     /**
      * List to keep history of sensor in world coordinate for averaging.
      */
-    private val mAccelerometerInWorldBasisHistories: WorldHistory?
+    /*private val mAccelerometerInWorldBasisHistories: WorldHistory?
     private val mGravityInWorldBasisHistories: WorldHistory?
-    private val mLinearAccelerationInWorldBasisHistories: WorldHistory?
+    private val mLinearAccelerationInWorldBasisHistories: WorldHistory?*/
 
     /**
      * For DSensor types that required Rotation Matrix for data processing
@@ -85,7 +85,7 @@ class DSensorEventProcessor(dSensorTypes: Int,
     private val mProcessDataWithRotationMatrix: Boolean
 
     /**
-     * For sensor type that does not require Rotation Matrix'
+     * For sensor type that does not require Rotation Matrix
      * but gravity for calculation
      */
     private val mProcessDataWithGravity: Boolean
@@ -98,11 +98,11 @@ class DSensorEventProcessor(dSensorTypes: Int,
     private val mMagneticField: DSensorEvent = DSensorEvent(DSensor.TYPE_DEVICE_MAGNETIC_FIELD, 3)
     // need this member to calculate TYPE_WORLD_LINEAR_ACCELERATION
     // when device has TYPE_LINEAR_ACCELERATION
-    private val mLinearAcceleration: DSensorEvent?
+    //private val mLinearAcceleration: DSensorEvent?
     private val mInclination: DSensorEvent?
 
     init {
-        mUIHandler = Handler(Looper.getMainLooper())
+        //mUIHandler = Handler(Looper.getMainLooper())
         mXAxisDirectionHistories = if (mDSensorTypes and DSensor.TYPE_X_AXIS_DIRECTION != 0)
             DirectionHistory(historyMaxLength) else null
         mMinusXAxisDirectionHistories = if (mDSensorTypes and DSensor.TYPE_MINUS_X_AXIS_DIRECTION != 0)
@@ -118,7 +118,7 @@ class DSensorEventProcessor(dSensorTypes: Int,
         val hasDirectionMember = mXAxisDirectionHistories != null || mYAxisDirectionHistories != null
                 || mZAxisDirectionHistories != null || mMinusXAxisDirectionHistories != null
                 || mMinusYAxisDirectionHistories != null || mMinusZAxisDirectionHistories != null
-        mAccelerometerInWorldBasisHistories = if (mDSensorTypes and DSensor.TYPE_WORLD_ACCELEROMETER != 0)
+        /*mAccelerometerInWorldBasisHistories = if (mDSensorTypes and DSensor.TYPE_WORLD_ACCELEROMETER != 0)
             WorldHistory(historyMaxLength, 3) else null
         mGravityInWorldBasisHistories = if (mDSensorTypes and DSensor.TYPE_WORLD_GRAVITY != 0)
             WorldHistory(historyMaxLength, 3) else null
@@ -127,21 +127,32 @@ class DSensorEventProcessor(dSensorTypes: Int,
         mProcessDataWithRotationMatrix = mDSensorTypes and DSensor.TYPE_WORLD_MAGNETIC_FIELD != 0
                 || mLinearAccelerationInWorldBasisHistories != null
                 || mGravityInWorldBasisHistories != null
-                || mAccelerometerInWorldBasisHistories != null || hasDirectionMember
-        mCalculateInclination = (mDSensorTypes and DSensor.TYPE_INCLINATION != 0
-                || mDSensorTypes and DSensor.TYPE_DEVICE_ROTATION != 0 || hasDirectionMember)
+                || mAccelerometerInWorldBasisHistories != null || hasDirectionMember*/
+        mProcessDataWithRotationMatrix = hasDirectionMember || mDSensorTypes and DSensor.TYPE_WORLD_MAGNETIC_FIELD != 0
+                || mDSensorTypes and DSensor.TYPE_WORLD_ACCELEROMETER != 0 || mDSensorTypes and DSensor.TYPE_WORLD_GRAVITY != 0
+                || mDSensorTypes and DSensor.TYPE_WORLD_LINEAR_ACCELERATION != 0
+        mCalculateInclination = hasDirectionMember || mDSensorTypes and DSensor.TYPE_INCLINATION != 0
+                || mDSensorTypes and DSensor.TYPE_DEVICE_ROTATION != 0
         mInclination = if (mCalculateInclination) DSensorEvent(DSensor.TYPE_INCLINATION, 1) else null
         mProcessDataWithGravity = mCalculateInclination || mDSensorTypes and DSensor.TYPE_PITCH != 0
                 || mDSensorTypes and DSensor.TYPE_ROLL != 0
         mCalculateGravity = !hasGravitySensor && (mProcessDataWithGravity || mProcessDataWithRotationMatrix)
-        mLinearAcceleration = if (!mHasLinearAccelerationSensor && mLinearAccelerationInWorldBasisHistories != null)
+        /*mLinearAcceleration = if (!mHasLinearAccelerationSensor && mLinearAccelerationInWorldBasisHistories != null)
             DSensorEvent(DSensor.TYPE_DEVICE_LINEAR_ACCELERATION, 3) else null
+        mLinearAcceleration = if (!mHasLinearAccelerationSensor && mLinearAccelerationInWorldBasisHistories != null)
+            DSensorEvent(DSensor.TYPE_DEVICE_LINEAR_ACCELERATION, 3) else null*/
     }
 
-    @Synchronized fun finish() {
+    fun finish() {
+        logger("DSensorEventProc", "finish")
         logger(DSensorEventProcessor::class.java.simpleName, "finish")
-        mUIHandler?.removeCallbacks(mPostEventRunnable)
-        mUIHandler = null
+        /*synchronized(mUIHandler!!)  {
+            mUIHandler!!.removeCallbacks(mPostEventRunnable)
+            mUIHandler = null
+        }*/
+        synchronized(mDSensorEventListener!!) {
+            mDSensorEventListener = null
+        }
     }
 
     @Deprecated(message = "TYPE_ORIENTATION is for testing")
@@ -160,10 +171,14 @@ class DSensorEventProcessor(dSensorTypes: Int,
             else -> 0
         }
 
+        logger("DSensorEventProc", "onSensorChanged changedSensorTypes = ${changedSensorTypes} " +
+            "timestamp = ${dProcessedSensorEvent.accelerometerInDeviceBasis?.timestamp} mDSensorEventListener is null = "
+                    + (mDSensorEventListener == null).toString())
         if (changedSensorTypes != 0) {
-            mPostEventRunnable.mChangedSensorTypes = changedSensorTypes
+            /*mPostEventRunnable.mChangedSensorTypes = changedSensorTypes
             mPostEventRunnable.mDProcessedSensorEvent = dProcessedSensorEvent
-            mUIHandler?.post(mPostEventRunnable)
+            mUIHandler?.post(mPostEventRunnable)*/
+            mDSensorEventListener?.onDSensorChanged(changedSensorTypes, dProcessedSensorEvent)
         }
     }
 
@@ -192,9 +207,9 @@ class DSensorEventProcessor(dSensorTypes: Int,
 
             if (mDSensorTypes and (DSensor.TYPE_DEVICE_LINEAR_ACCELERATION or DSensor.TYPE_WORLD_LINEAR_ACCELERATION) != 0) {
                 val dLinearAccelerationSensorEvent = calculateLinearAcceleration()
-                if (mLinearAcceleration != null) {
+                /*if (mLinearAcceleration != null) {
                     setLinearAcceleration(dLinearAccelerationSensorEvent)
-                }
+                }*/
                 if (mDSensorTypes and DSensor.TYPE_DEVICE_LINEAR_ACCELERATION != 0) {
                     dProcessedSensorEvent.linearAccelerationInDeviceBasis = DSensorEvent(dLinearAccelerationSensorEvent)
                     changedSensorTypes = changedSensorTypes or DSensor.TYPE_DEVICE_LINEAR_ACCELERATION
@@ -295,13 +310,13 @@ class DSensorEventProcessor(dSensorTypes: Int,
             changedSensorTypes = changedSensorTypes or DSensor.TYPE_DEVICE_LINEAR_ACCELERATION
         }
 
-        if (mDSensorTypes and DSensor.TYPE_WORLD_LINEAR_ACCELERATION != 0 && mLinearAccelerationInWorldBasisHistories != null) {
+        /*if (mDSensorTypes and DSensor.TYPE_WORLD_LINEAR_ACCELERATION != 0 && mLinearAccelerationInWorldBasisHistories != null) {
             mLinearAccelerationInWorldBasisHistories.add(DSensor.TYPE_DEVICE_LINEAR_ACCELERATION,
                 event.accuracy, event.timestamp, event.values)
             dProcessedSensorEvent.linearAccelerationInWorldBasis =
                 mLinearAccelerationInWorldBasisHistories.getAverageSensorEvent(DSensor.TYPE_DEVICE_LINEAR_ACCELERATION)
             changedSensorTypes = changedSensorTypes or DSensor.TYPE_WORLD_LINEAR_ACCELERATION
-        }
+        }*/
 
         return changedSensorTypes
     }
@@ -357,13 +372,13 @@ class DSensorEventProcessor(dSensorTypes: Int,
     }
 
     private fun setLinearAcceleration(dSensorEvent: DSensorEvent) {
-        mLinearAcceleration?.let {
+        /*mLinearAcceleration?.let {
             it.accuracy = dSensorEvent.accuracy
             it.timestamp = dSensorEvent.timestamp
             for (i in 0..2) {
                 it.values[i] = dSensorEvent.values[i]
             }
-        }
+        }*/
     }
 
     private fun processSensorData(dProcessedSensorEvent: DProcessedSensorEvent): Int {
@@ -486,7 +501,7 @@ class DSensorEventProcessor(dSensorTypes: Int,
 
     private fun processWorldBasisDSensorEvent(dProcessedSensorEvent: DProcessedSensorEvent) : Int {
         var changedSensorTypes = 0
-        if (mDSensorTypes and DSensor.TYPE_WORLD_ACCELEROMETER != 0 && mAccelerometerInWorldBasisHistories != null) {
+        /*if (mDSensorTypes and DSensor.TYPE_WORLD_ACCELEROMETER != 0 && mAccelerometerInWorldBasisHistories != null) {
             dProcessedSensorEvent.accelerometerInWorldBasis = getAverageWorldBasisEvent(mAccelerometer,
                 mAccelerometerInWorldBasisHistories)
             changedSensorTypes = changedSensorTypes or DSensor.TYPE_WORLD_ACCELEROMETER
@@ -495,7 +510,7 @@ class DSensorEventProcessor(dSensorTypes: Int,
         if (mDSensorTypes and DSensor.TYPE_WORLD_GRAVITY != 0 && mGravityInWorldBasisHistories != null) {
             dProcessedSensorEvent.gravityInWorldBasis = getAverageWorldBasisEvent(mGravity, mGravityInWorldBasisHistories)
             changedSensorTypes = changedSensorTypes or DSensor.TYPE_WORLD_GRAVITY
-        }
+        }*/
 
         if (mDSensorTypes and DSensor.TYPE_WORLD_MAGNETIC_FIELD != 0) {
             val values = productOfSquareMatrixAndVector(mRotationMatrix, mMagneticField.values)
@@ -506,19 +521,19 @@ class DSensorEventProcessor(dSensorTypes: Int,
             }
         }
 
-        if (!mHasLinearAccelerationSensor && mLinearAcceleration != null && mLinearAccelerationInWorldBasisHistories != null) {
+        /*if (!mHasLinearAccelerationSensor && mLinearAcceleration != null && mLinearAccelerationInWorldBasisHistories != null) {
             dProcessedSensorEvent.linearAccelerationInWorldBasis = getAverageWorldBasisEvent(mLinearAcceleration,
                 mLinearAccelerationInWorldBasisHistories)
             changedSensorTypes = changedSensorTypes or DSensor.TYPE_WORLD_LINEAR_ACCELERATION
-        }
+        }*/
 
         return changedSensorTypes
     }
 
-    private fun getAverageWorldBasisEvent(itemInDeviceBasis: DSensorEvent, worldHistory: WorldHistory) : DSensorEvent {
+    /*private fun getAverageWorldBasisEvent(itemInDeviceBasis: DSensorEvent, worldHistory: WorldHistory) : DSensorEvent {
         worldHistory.add(itemInDeviceBasis)
         return worldHistory.getAverageSensorEvent(itemInDeviceBasis.sensorType)
-    }
+    }*/
 
     private fun processCompassEvents(dProcessedSensorEvent: DProcessedSensorEvent) : Int {
         var changedSensorTypes = 0
@@ -662,7 +677,7 @@ class DSensorEventProcessor(dSensorTypes: Int,
         }
     }
 
-    private inner class WorldHistory(historyMaxSize: Int, historyValuesSumLength: Int) {
+    /*private inner class WorldHistory(historyMaxSize: Int, historyValuesSumLength: Int) {
         internal val mHistories = LinkedList<DSensorEvent>()
         internal var mHistoryTimeStampSum: Long = 0
         internal val mHistoryMaxSize = historyMaxSize
@@ -719,15 +734,16 @@ class DSensorEventProcessor(dSensorTypes: Int,
                 (1.0f / mHistories.size).toLong() * mHistoryTimeStampSum,
                 scaleVector(mHistoriesValuesSum, 1.0f / mHistories.size))
         }
-    }
+    }*/
 
-    private inner class PostEventRunnable : Runnable {
+    /*private inner class PostEventRunnable : Runnable {
         var mChangedSensorTypes: Int = 0
         lateinit var mDProcessedSensorEvent: DProcessedSensorEvent
 
         override fun run() {
+            logger("DSensorEventProc", "PostEventRunable run: timeStamp = ${mDProcessedSensorEvent.accelerometerInDeviceBasis?.timestamp}")
             mDSensorEventListener.onDSensorChanged(mChangedSensorTypes, mDProcessedSensorEvent)
         }
-    }
+    }*/
 
 }

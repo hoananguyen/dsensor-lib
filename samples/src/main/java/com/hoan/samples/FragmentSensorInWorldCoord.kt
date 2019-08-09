@@ -8,8 +8,12 @@ import android.view.ViewGroup
 import com.hoan.dsensor.DProcessedSensorEvent
 import com.hoan.dsensor.DSensor
 import com.hoan.dsensor.DSensorEvent
+import com.hoan.dsensor.utils.logger
 import kotlinx.android.synthetic.main.fragment_sensor_in_world_basis.*
 import kotlinx.android.synthetic.main.fragment_sensor_in_world_basis.view.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 private const val DEVICE_COORDINATES = "device coordinates"
 private const val WORLD_COORDINATES = "world coordinates"
@@ -26,6 +30,7 @@ class FragmentSensorInWorldCoord : BaseSensorFragment() {
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+        logger(FragmentSensorInWorldCoord::class.java.simpleName, "onCreateView")
         val v = inflater.inflate(R.layout.fragment_sensor_in_world_basis, container, false)
         v.textview_sensor.text = getSensorName() ?: getString(R.string.error_unsupported_sensor)
 
@@ -33,35 +38,42 @@ class FragmentSensorInWorldCoord : BaseSensorFragment() {
     }
 
     override fun onPause() {
+        logger(FragmentSensorInWorldCoord::class.java.simpleName, "onPause")
         stopSensor()
         super.onPause()
     }
 
     override fun onResume() {
         super.onResume()
+        logger(FragmentSensorInWorldCoord::class.java.simpleName, "onResume")
 
         startSensor()
     }
 
     override fun onSensorChanged(newSensorType: Int) {
         super.onSensorChanged(newSensorType)
+        logger(FragmentSensorInWorldCoord::class.java.simpleName, "onSensorChanged")
 
         textview_sensor.text = getSensorName() ?: getString(R.string.error_unsupported_sensor)
     }
 
     override fun onDSensorChanged(changedDSensorTypes: Int, processedSensorEvent: DProcessedSensorEvent) {
-        val dSensorEventHashMap: HashMap<String, DSensorEvent?> = getDSensorEvent(processedSensorEvent)
+        logger(FragmentSensorInWorldCoord::class.java.simpleName, "onDSensorChanged")
+        mCoroutineScop.launch(Dispatchers.Main) {
+            val dSensorEventHashMap: HashMap<String, DSensorEvent?> = getDSensorEvent(processedSensorEvent)
 
-        dSensorEventHashMap[DEVICE_COORDINATES]?.apply {
-            textview_sensor_x_value.text = values[0].toString()
-            textview_sensor_y_value.text = values[1].toString()
-            textview_sensor_z_value.text = values[2].toString()
-        }
+            dSensorEventHashMap[DEVICE_COORDINATES]?.apply {
+                logger(FragmentSensorInWorldCoord::class.java.simpleName, "onDSensorChanged: timeStamp = ${timestamp}")
+                textview_sensor_x_value.text = values[0].toString()
+                textview_sensor_y_value.text = values[1].toString()
+                textview_sensor_z_value.text = values[2].toString()
+            }
 
-        dSensorEventHashMap[WORLD_COORDINATES]?.apply {
-            textview_sensor_in_world_coord_x_value.text = values[0].toString()
-            textview_sensor_in_world_coord_y_value.text = values[1].toString()
-            textview_sensor_in_world_coord_z_value.text = values[2].toString()
+            dSensorEventHashMap[WORLD_COORDINATES]?.apply {
+                textview_sensor_in_world_coord_x_value.text = values[0].toString()
+                textview_sensor_in_world_coord_y_value.text = values[1].toString()
+                textview_sensor_in_world_coord_z_value.text = values[2].toString()
+            }
         }
     }
 
@@ -101,6 +113,7 @@ class FragmentSensorInWorldCoord : BaseSensorFragment() {
     }
 
     override fun showError(errorMessage: String?) {
+        logger(FragmentSensorInWorldCoord::class.java.simpleName, "showError: $errorMessage")
         textview_error.text = errorMessage
     }
 }

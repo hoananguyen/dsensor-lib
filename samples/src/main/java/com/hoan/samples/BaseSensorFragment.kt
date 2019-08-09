@@ -5,9 +5,12 @@ import android.support.v4.app.Fragment
 import com.hoan.dsensor.*
 import com.hoan.dsensor.interfaces.DSensorEventListener
 import com.hoan.dsensor.utils.logger
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.cancel
 
 
 abstract class BaseSensorFragment : Fragment(), DSensorEventListener {
+    protected val mCoroutineScop = MainScope()
 
     protected var mSensorType: Int = 0
 
@@ -41,6 +44,18 @@ abstract class BaseSensorFragment : Fragment(), DSensorEventListener {
                 stopSensor()
             }
         }
+    }
+
+    override fun onPause() {
+        super.onPause()
+
+        mCoroutineScop.cancel()
+    }
+
+    override fun onDetach() {
+        super.onDetach()
+
+        logger(BaseSensorFragment::class.java.simpleName, "onDetach")
     }
 
     abstract fun showError(errorMessage: String?)

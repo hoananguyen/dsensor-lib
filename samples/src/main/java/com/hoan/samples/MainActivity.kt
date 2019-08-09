@@ -26,7 +26,7 @@ class MainActivity : AppCompatActivity(), FragmentSensorList.OnFragmentInteracti
             if (supportFragmentManager.findFragmentByTag(FragmentSensorInfo::class.java.simpleName) != null) return
 
             val backStackCount = supportFragmentManager.backStackEntryCount
-            logger(MainActivity::class.java.simpleName, "onGroupItemSelected: backStack count = $backStackCount")
+            logger(MainActivity::class.java.simpleName, "onGroupItemSelected: backStackCount = $backStackCount")
             if (backStackCount > 0) {
                 val fragmentName = supportFragmentManager.getBackStackEntryAt(backStackCount - 1).name
                 val fragment = supportFragmentManager.findFragmentByTag(fragmentName)
@@ -46,13 +46,13 @@ class MainActivity : AppCompatActivity(), FragmentSensorList.OnFragmentInteracti
             val fragmentName = supportFragmentManager.getBackStackEntryAt(backStackCount - 1).name
             val topOfStackFragment = supportFragmentManager.findFragmentByTag(fragmentName)
             if (topOfStackFragment is BaseSensorFragment) {
-                topOfStackFragment.stopSensor()
-
                 if (getString(R.string.compass) == group && FragmentCompass::class.java.simpleName == fragmentName
                     || (getString(R.string.sensor_in_world_coord) == group && FragmentSensorInWorldCoord::class.java.simpleName == fragmentName)) {
                     topOfStackFragment.onSensorChanged(childItemId)
                     return
                 }
+
+                topOfStackFragment.stopSensor()
             }
         }
 
@@ -77,6 +77,7 @@ class MainActivity : AppCompatActivity(), FragmentSensorList.OnFragmentInteracti
     private fun loadFragment(containerResId: Int, fragment: Fragment, addToBackStact: Boolean = false) {
         logger(MainActivity::class.java.simpleName, "loadFragment")
         if (supportFragmentManager.backStackEntryCount != 0) {
+            logger(MainActivity::class.java.simpleName, "loadFragment pop backStack")
             supportFragmentManager.popBackStackImmediate()
         }
         val transaction: FragmentTransaction = supportFragmentManager.beginTransaction()
