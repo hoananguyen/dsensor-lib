@@ -3,21 +3,19 @@ package com.hoan.dsensor
 import android.hardware.SensorManager
 
 
-class DSensorEvent(val sensorType: Int, valuesLength: Int) {
+class DSensorEvent(val sensorType: Int) {
     var accuracy: Int = SensorManager.SENSOR_STATUS_UNRELIABLE
     var timestamp: Long = 0
-    val values: FloatArray = FloatArray(valuesLength)
+    lateinit var values: FloatArray
 
-    constructor(sensorType: Int, accuracy: Int, timestamp: Long, values: FloatArray): this(sensorType, values.size){
+    constructor(sensorType: Int, accuracy: Int, timestamp: Long, values: FloatArray): this(sensorType){
         this.accuracy = accuracy
         this.timestamp = timestamp
-        System.arraycopy(values, 0, this.values, 0, values.size)
+        this.values = values.copyOf()
     }
 
-    constructor(dSensorEvent: DSensorEvent): this(dSensorEvent.sensorType, dSensorEvent.values.size) {
-        this.accuracy = dSensorEvent.accuracy
-        this.timestamp = dSensorEvent.timestamp
-        System.arraycopy(dSensorEvent.values, 0, this.values, 0, values.size)
+    fun copyOf(): DSensorEvent {
+        return DSensorEvent(sensorType, accuracy, timestamp, values.copyOf())
     }
 
     override fun toString(): String {

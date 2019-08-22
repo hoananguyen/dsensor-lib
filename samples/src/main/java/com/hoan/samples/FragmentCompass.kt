@@ -2,9 +2,13 @@ package com.hoan.samples
 
 
 import android.os.Bundle
-import android.view.*
+import android.util.SparseArray
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import com.hoan.dsensor.*
 import kotlinx.android.synthetic.main.fragment_compass.*
+import kotlinx.coroutines.launch
 import kotlin.math.round
 import kotlin.math.roundToInt
 
@@ -48,7 +52,7 @@ class FragmentCompass : BaseSensorFragment() {
     }
 
     private fun setOrientationViewsVisibility() {
-        if ((mSensorType and DSensor.TYPE_DEPRECATED_ORIENTATION) != 0) {
+        if ((mSensorType and TYPE_DEPRECATED_ORIENTATION) != 0) {
             if (textview_orientation.visibility != View.VISIBLE) {
                 textview_orientation.visibility = View.VISIBLE
                 textview_orientation_value.visibility = View.VISIBLE
@@ -59,44 +63,45 @@ class FragmentCompass : BaseSensorFragment() {
         }
     }
 
-    override fun onDSensorChanged(changedDSensorTypes: Int, processedSensorEvent: DProcessedSensorEvent) {
-        when {
-            (DSensor.TYPE_DEPRECATED_ORIENTATION and changedDSensorTypes) != 0  -> {
-                val orientation = processedSensorEvent.depreciatedOrientation?.values?.get(0)
-                if (orientation != null) {
+    override fun onDSensorChanged(changedDSensorTypes: Int, resultMap: SparseArray<DSensorEvent>) {
+        //logger("FragmentCompass", "onDSensorChanged: changedSensorTypes = ${changedDSensorTypes}")
+        mCoroutineScope.launch {
+            when {
+                (TYPE_DEPRECATED_ORIENTATION and changedDSensorTypes) != 0 -> {
+                    val orientation = resultMap[TYPE_DEPRECATED_ORIENTATION]?.values!![0]
                     textview_orientation_value.text = round(orientation).toString()
                 }
-            }
-            else -> {
-                processedSensorEvent.minusZAxisDirection?.apply {
-                    if (values[0].isFinite()) {
-                        var valueInDegree = Math.toDegrees(values[0].toDouble()).roundToInt()
-                        if (valueInDegree < 0) {
-                            valueInDegree = (valueInDegree + 360) % 360
+                else -> {
+                    resultMap[TYPE_NEGATIVE_Z_AXIS_DIRECTION]?.apply {
+                        if (values[0].isFinite()) {
+                            textview_compass_value.text = convertToDegree(values[0]).toString()
+                            return@launch
                         }
-                        textview_compass_value.text = valueInDegree.toString()
-                        return
                     }
-                }
-                getDSensorEvent(processedSensorEvent)?.apply {
-                    if (values[0].isFinite()) {
-                        textview_compass_value.text = values[0].toString()
-                    } else if (processedSensorEvent.minusZAxisDirection == null) {
-                        textview_compass_value.setText(R.string.device_not_flat_no_compass_value)
+                    getXOrYDSensorEvent(resultMap)?.apply {
+                        if (values[0].isFinite()) {
+                            textview_compass_value.text = convertToDegree(values[0]).toString()
+                        } else if (resultMap[TYPE_NEGATIVE_Z_AXIS_DIRECTION] == null) {
+                            textview_compass_value.setText(R.string.device_not_flat_no_compass_value)
+                        }
                     }
                 }
             }
         }
     }
 
-    private fun getDSensorEvent(dProcessedSensorEvent: DProcessedSensorEvent): DSensorEvent? {
-        return when {
-            (mSensorType or DSensor.TYPE_X_AXIS_DIRECTION) != 0 -> dProcessedSensorEvent.xAxisDirection
-            (mSensorType or DSensor.TYPE_MINUS_X_AXIS_DIRECTION) != 0 -> dProcessedSensorEvent.minusXAxisDirection
-            (mSensorType or DSensor.TYPE_Y_AXIS_DIRECTION) != 0 -> dProcessedSensorEvent.yAxisDirection
-            (mSensorType or DSensor.TYPE_MINUS_Y_AXIS_DIRECTION) != 0 -> dProcessedSensorEvent.minusYAxisDirection
-            else -> null
+    private fun getXOrYDSensorEvent(resultMap: SparseArray<DSensorEvent>): DSensorEvent? {
+        return resultMap[TYPE_X_AXIS_DIRECTION] ?: resultMap[TYPE_Y_AXIS_DIRECTION] ?: resultMap[TYPE_NEGATIVE_X_AXIS_DIRECTION] ?:
+                resultMap[TYPE_NEGATIVE_Y_AXIS_DIRECTION]
+    }
+
+    private fun convertToDegree(valueInRadian: Float): Int {
+        var convertValue =  Math.toDegrees(valueInRadian.toDouble()).roundToInt()
+        if (convertValue < 0) {
+            convertValue = (convertValue + 360) % 360
         }
+
+        return convertValue
     }
 
     override fun showError(errorMessage: String?) {

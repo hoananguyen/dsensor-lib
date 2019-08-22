@@ -2,6 +2,8 @@ package com.hoan.dsensor
 
 import android.content.Context
 import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.Handler
 import android.os.HandlerThread
@@ -18,19 +20,27 @@ const val TYPE_GYROSCOPE_NOT_AVAILABLE = 32
 const val TYPE_ROTATION_VECTOR_NOT_AVAILABLE = 64
 const val TYPE_ORIENTATION_NOT_AVAILABLE = 128
 
-class DSensorManager(context: Context) {
+class DSensorManager(context: Context): SensorEventListener {
 
     private val mSensorManager: SensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
 
     private val mSensorThread: HandlerThread = HandlerThread("sensor_thread")
 
-    private var mDSensorEventProcessor: DSensorEventProcessor? = null
+    private var mDSensorEventProcessor: DSensorEventProcessorImp? = null
 
     private val mRegisterResult: RegisterResult = RegisterResult()
 
-    fun listSensor(): List<Sensor> = mSensorManager.getSensorList(Sensor.TYPE_ALL)
+    override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {
 
-    fun hasSensor(sensorType: Int): Boolean = mSensorManager.getDefaultSensor(sensorType) != null
+    }
+
+    override fun onSensorChanged(event: SensorEvent) {
+        mDSensorEventProcessor?.run {
+            onDSensorChanged(DSensorEvent(getDSensorType(event.sensor.type), event.accuracy, event.timestamp, event.values))
+        }
+    }
+
+    fun listSensor(): List<Sensor> = mSensorManager.getSensorList(Sensor.TYPE_ALL)
 
     fun getErrors(): Set<Int> {
         return mRegisterResult.mErrorList
@@ -49,8 +59,7 @@ class DSensorManager(context: Context) {
     fun startDSensor(dSensorTypes: Int,
                      dSensorEventListener: DSensorEventListener,
                      sensorRate: Int = SensorManager.SENSOR_DELAY_NORMAL,
-                     historyMaxLength: Int = DEFAULT_HISTORY_SIZE
-                    ): Boolean {
+                     historyMaxLength: Int = DEFAULT_HISTORY_SIZE): Boolean {
         logger(DSensorManager::class.java.simpleName, "startDSensor($dSensorTypes, $sensorRate $historyMaxLength)")
 
         mRegisterResult.mErrorList.clear()
@@ -62,10 +71,10 @@ class DSensorManager(context: Context) {
 
         mSensorThread.start()
 
-        mDSensorEventProcessor = DSensorEventProcessor(dSensorTypes, dSensorEventListener,
+        mDSensorEventProcessor = DSensorEventProcessorImp(dSensorTypes, dSensorEventListener,
             mSensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY) != null,
             mSensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION) != null,
-            mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR) != null, historyMaxLength)
+            historyMaxLength)
 
         registerListener(dSensorTypes, sensorRate)
 
@@ -78,31 +87,32 @@ class DSensorManager(context: Context) {
     }
 
     private fun registerListener(dSensorTypes: Int, sensorRate: Int) {
-        if (dSensorTypes and (DSensor.TYPE_DEVICE_ACCELEROMETER or DSensor.TYPE_WORLD_ACCELEROMETER) != 0) {
+        if (dSensorTypes and (TYPE_DEVICE_ACCELEROMETER or TYPE_WORLD_ACCELEROMETER) != 0) {
             registerListener(Sensor.TYPE_ACCELEROMETER, sensorRate, TYPE_ACCELEROMETER_NOT_AVAILABLE)
         }
 
-        if (dSensorTypes and (DSensor.TYPE_DEVICE_MAGNETIC_FIELD or DSensor.TYPE_WORLD_MAGNETIC_FIELD) != 0) {
+        if (dSensorTypes and (TYPE_DEVICE_MAGNETIC_FIELD or TYPE_WORLD_MAGNETIC_FIELD) != 0) {
             registerListener(Sensor.TYPE_MAGNETIC_FIELD, sensorRate, TYPE_MAGNETIC_FIELD_NOT_AVAILABLE)
         }
 
-        if (dSensorTypes and DSensor.TYPE_GYROSCOPE != 0) {
+        if (dSensorTypes and TYPE_GYROSCOPE != 0) {
             registerListener(Sensor.TYPE_GYROSCOPE, sensorRate, TYPE_GYROSCOPE_NOT_AVAILABLE)
         }
 
-        if (dSensorTypes and DSensor.TYPE_ROTATION_VECTOR != 0) {
+        if (dSensorTypes and TYPE_ROTATION_VECTOR != 0) {
             registerListener(Sensor.TYPE_ROTATION_VECTOR, sensorRate, TYPE_ROTATION_VECTOR_NOT_AVAILABLE)
         }
 
-        if (dSensorTypes and DSensor.TYPE_DEPRECATED_ORIENTATION != 0) {
+        if (dSensorTypes and TYPE_DEPRECATED_ORIENTATION != 0) {
+            @Suppress("DEPRECATION")
             registerListener(Sensor.TYPE_ORIENTATION, sensorRate, TYPE_ORIENTATION_NOT_AVAILABLE)
         }
 
-        if (dSensorTypes and (DSensor.TYPE_DEVICE_GRAVITY or DSensor.TYPE_WORLD_GRAVITY) != 0) {
+        if (dSensorTypes and (TYPE_DEVICE_GRAVITY or TYPE_WORLD_GRAVITY) != 0) {
             registerGravityListener(sensorRate)
         }
 
-        if (dSensorTypes and (DSensor.TYPE_DEVICE_LINEAR_ACCELERATION or DSensor.TYPE_WORLD_LINEAR_ACCELERATION) != 0) {
+        if (dSensorTypes and (TYPE_DEVICE_LINEAR_ACCELERATION or TYPE_WORLD_LINEAR_ACCELERATION) != 0) {
             registerLinearAccelerationListener(sensorRate)
         }
 
@@ -141,18 +151,12 @@ class DSensorManager(context: Context) {
     }
 
     private fun registerSensorListenerForRotationMatrix(sensorRate: Int) {
-        if (!mRegisterResult.mSensorRegisteredList.contains(Sensor.TYPE_ROTATION_VECTOR)) {
-            registerListener(Sensor.TYPE_ROTATION_VECTOR, sensorRate, TYPE_ROTATION_VECTOR_NOT_AVAILABLE)
+        if (!mRegisterResult.mSensorRegisteredList.contains(Sensor.TYPE_MAGNETIC_FIELD)) {
+            registerListener(Sensor.TYPE_MAGNETIC_FIELD, sensorRate, TYPE_MAGNETIC_FIELD_NOT_AVAILABLE)
         }
 
-        if (mRegisterResult.mErrorList.contains(TYPE_ROTATION_VECTOR_NOT_AVAILABLE)) {
-            if (!mRegisterResult.mSensorRegisteredList.contains(Sensor.TYPE_MAGNETIC_FIELD)) {
-                registerListener(Sensor.TYPE_MAGNETIC_FIELD, sensorRate, TYPE_MAGNETIC_FIELD_NOT_AVAILABLE)
-            }
-
-            if (mRegisterResult.mSensorRegisteredList.contains(Sensor.TYPE_MAGNETIC_FIELD)) {
-                registerGravityListener(sensorRate)
-            }
+        if (mRegisterResult.mSensorRegisteredList.contains(Sensor.TYPE_MAGNETIC_FIELD)) {
+            registerGravityListener(sensorRate)
         }
     }
 
@@ -164,7 +168,7 @@ class DSensorManager(context: Context) {
      */
     private fun registerListener(sensorType: Int, sensorRate: Int, errorValue: Int) {
         logger(DSensorManager::class.java.simpleName, "registerListener($sensorType, $sensorRate, $errorValue)")
-        if (mSensorManager.registerListener(mDSensorEventProcessor, mSensorManager.getDefaultSensor(sensorType),
+        if (mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(sensorType),
             sensorRate, Handler(mSensorThread.looper))) {
             mRegisterResult.mSensorRegisteredList.add(sensorType)
         } else {
@@ -175,9 +179,10 @@ class DSensorManager(context: Context) {
     fun stopDSensor() {
         logger(DSensorManager::class.java.simpleName, "stopDSensor")
 
+        mSensorManager.unregisterListener(this)
+
         mDSensorEventProcessor?.run {
             finish()
-            mSensorManager.unregisterListener(this)
         }
 
         mDSensorEventProcessor = null
@@ -193,10 +198,10 @@ class DSensorManager(context: Context) {
      * @return true if dSensorTypes is of TYPE_WORLD_*
      */
     private fun worldTypesRegistered(dSensorTypes: Int): Boolean {
-        return (dSensorTypes and DSensor.TYPE_WORLD_ACCELEROMETER != 0
-                || dSensorTypes and DSensor.TYPE_WORLD_GRAVITY != 0
-                || dSensorTypes and DSensor.TYPE_WORLD_MAGNETIC_FIELD != 0
-                || dSensorTypes and DSensor.TYPE_WORLD_LINEAR_ACCELERATION != 0)
+        return (dSensorTypes and TYPE_WORLD_ACCELEROMETER != 0
+                || dSensorTypes and TYPE_WORLD_GRAVITY != 0
+                || dSensorTypes and TYPE_WORLD_MAGNETIC_FIELD != 0
+                || dSensorTypes and TYPE_WORLD_LINEAR_ACCELERATION != 0)
     }
 
     /**
@@ -205,12 +210,12 @@ class DSensorManager(context: Context) {
      * @return true if dSensorTypes is of TYPE_*_DIRECTION
      */
     private fun directionTypesRegistered(dSensorTypes: Int): Boolean {
-        return (dSensorTypes and DSensor.TYPE_Z_AXIS_DIRECTION != 0
-                || dSensorTypes and DSensor.TYPE_MINUS_Z_AXIS_DIRECTION != 0
-                || dSensorTypes and DSensor.TYPE_X_AXIS_DIRECTION != 0
-                || dSensorTypes and DSensor.TYPE_MINUS_X_AXIS_DIRECTION != 0
-                || dSensorTypes and DSensor.TYPE_Y_AXIS_DIRECTION != 0
-                || dSensorTypes and DSensor.TYPE_MINUS_Y_AXIS_DIRECTION != 0)
+        return (dSensorTypes and TYPE_Z_AXIS_DIRECTION != 0
+                || dSensorTypes and TYPE_NEGATIVE_Z_AXIS_DIRECTION != 0
+                || dSensorTypes and TYPE_X_AXIS_DIRECTION != 0
+                || dSensorTypes and TYPE_NEGATIVE_X_AXIS_DIRECTION != 0
+                || dSensorTypes and TYPE_Y_AXIS_DIRECTION != 0
+                || dSensorTypes and TYPE_NEGATIVE_Y_AXIS_DIRECTION != 0)
     }
 
     private class RegisterResult {

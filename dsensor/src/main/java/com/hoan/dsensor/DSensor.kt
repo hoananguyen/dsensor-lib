@@ -1,9 +1,47 @@
 package com.hoan.dsensor
 
-/**
- * Class represents sensors supported.
- */
-object DSensor {
+import android.hardware.Sensor
+
+fun getDirectionTypes(): List<Int> {
+        return arrayListOf(TYPE_X_AXIS_DIRECTION, TYPE_NEGATIVE_X_AXIS_DIRECTION, TYPE_Y_AXIS_DIRECTION,
+            TYPE_NEGATIVE_Y_AXIS_DIRECTION, TYPE_Z_AXIS_DIRECTION, TYPE_NEGATIVE_Z_AXIS_DIRECTION)
+    }
+
+    fun getWorldCoordinatesTypes(): List<Int> {
+        return arrayListOf(TYPE_WORLD_ACCELEROMETER, TYPE_WORLD_LINEAR_ACCELERATION, TYPE_WORLD_GRAVITY, TYPE_WORLD_MAGNETIC_FIELD)
+    }
+
+    fun getRawDSensor(dWorldCoordinatesSensor: Int): Int {
+        return when (dWorldCoordinatesSensor) {
+            TYPE_WORLD_ACCELEROMETER -> TYPE_DEVICE_ACCELEROMETER
+            TYPE_WORLD_LINEAR_ACCELERATION -> TYPE_DEVICE_LINEAR_ACCELERATION
+            TYPE_WORLD_GRAVITY -> TYPE_DEVICE_GRAVITY
+            TYPE_WORLD_MAGNETIC_FIELD -> TYPE_DEVICE_MAGNETIC_FIELD
+            else -> ERROR_UNSUPPORTED_TYPE
+        }
+    }
+
+    fun getDSensorList(): ArrayList<Int> {
+        return arrayListOf(TYPE_DEVICE_ACCELEROMETER, TYPE_DEVICE_LINEAR_ACCELERATION, TYPE_DEVICE_GRAVITY,
+            TYPE_DEVICE_MAGNETIC_FIELD, TYPE_GYROSCOPE, TYPE_ROTATION_VECTOR, TYPE_WORLD_ACCELEROMETER,
+            TYPE_WORLD_LINEAR_ACCELERATION, TYPE_WORLD_GRAVITY, TYPE_WORLD_MAGNETIC_FIELD, TYPE_INCLINATION,
+            TYPE_DEVICE_ROTATION, TYPE_PITCH, TYPE_ROLL, TYPE_X_AXIS_DIRECTION, TYPE_NEGATIVE_X_AXIS_DIRECTION,
+            TYPE_Y_AXIS_DIRECTION, TYPE_NEGATIVE_Y_AXIS_DIRECTION, TYPE_Z_AXIS_DIRECTION,
+            TYPE_NEGATIVE_Z_AXIS_DIRECTION, TYPE_DEPRECATED_ORIENTATION)
+    }
+
+    fun getDSensorType(androidSensor: Int): Int {
+        return when (androidSensor) {
+            Sensor.TYPE_ACCELEROMETER -> TYPE_DEVICE_ACCELEROMETER
+            Sensor.TYPE_LINEAR_ACCELERATION -> TYPE_DEVICE_LINEAR_ACCELERATION
+            Sensor.TYPE_GRAVITY -> TYPE_DEVICE_GRAVITY
+            Sensor.TYPE_MAGNETIC_FIELD -> TYPE_DEVICE_MAGNETIC_FIELD
+            Sensor.TYPE_ROTATION_VECTOR -> TYPE_ROTATION_VECTOR
+            Sensor.TYPE_GYROSCOPE -> TYPE_GYROSCOPE
+            else -> ERROR_UNSUPPORTED_TYPE
+        }
+    }
+
     const val TYPE_DEVICE_ACCELEROMETER = 2
     const val TYPE_DEVICE_LINEAR_ACCELERATION = 4
     const val TYPE_DEVICE_GRAVITY = 8
@@ -86,7 +124,7 @@ object DSensor {
     /**
      * Same as TYPE_X_AXIS_DIRECTION but minus x-axis instead.
      */
-    const val TYPE_MINUS_X_AXIS_DIRECTION = 65536
+    const val TYPE_NEGATIVE_X_AXIS_DIRECTION = 65536
 
     /**
      * This is the angle between the world magnetic north and
@@ -103,7 +141,12 @@ object DSensor {
     /**
      * Same as TYPE_Y_AXIS_DIRECTION but minus y-axis instead.
      */
-    const val TYPE_MINUS_Y_AXIS_DIRECTION = 262144
+    const val TYPE_NEGATIVE_Y_AXIS_DIRECTION = 262144
+
+    /**
+     * Same as TYPE_NEGATIVE_Z_AXIS_DIRECTION below but z-axis instead.
+     */
+    const val TYPE_Z_AXIS_DIRECTION = 524288
 
     /**
      * This is the angle between the world magnetic north and
@@ -119,12 +162,7 @@ object DSensor {
      * the direction of the device -z does not change when the
      * device orientation changes.
      */
-    const val TYPE_MINUS_Z_AXIS_DIRECTION = 524288
-
-    /**
-     * Same as TYPE_MINUS_Z_AXIS_DIRECTION but z-axis instead.
-     */
-    const val TYPE_Z_AXIS_DIRECTION = 1048576
+    const val TYPE_NEGATIVE_Z_AXIS_DIRECTION = 1048576
 
     /**
      * This is the depreciated Sensor.TYPE_ORIENTATION.
@@ -143,7 +181,8 @@ object DSensor {
             or TYPE_GYROSCOPE or TYPE_ROTATION_VECTOR
             or TYPE_INCLINATION or TYPE_DEVICE_ROTATION
             or TYPE_PITCH or TYPE_ROLL or TYPE_DEPRECATED_ORIENTATION
-            or TYPE_Z_AXIS_DIRECTION or TYPE_MINUS_Z_AXIS_DIRECTION
-            or TYPE_X_AXIS_DIRECTION or TYPE_MINUS_X_AXIS_DIRECTION
-            or TYPE_Y_AXIS_DIRECTION or TYPE_MINUS_Y_AXIS_DIRECTION)
-}
+            or TYPE_Z_AXIS_DIRECTION or TYPE_NEGATIVE_Z_AXIS_DIRECTION
+            or TYPE_X_AXIS_DIRECTION or TYPE_NEGATIVE_X_AXIS_DIRECTION
+            or TYPE_Y_AXIS_DIRECTION or TYPE_NEGATIVE_Y_AXIS_DIRECTION)
+
+

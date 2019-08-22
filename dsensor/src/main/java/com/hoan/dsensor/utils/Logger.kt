@@ -1,7 +1,6 @@
 package com.hoan.dsensor.utils
 
 import android.util.Log
-import com.hoan.dsensor.DSensorManager
 
 /**
  * Convenient method for logging
@@ -11,18 +10,19 @@ private const val WRITE_TO_FILE = false
 
 private val DEBUG_CLASSES = arrayOf(
     "dummy",
-    "DSensorEventProc",
-    DSensorManager::class.java.simpleName,
-    "BaseSensorFragment",
-    "FragmentSensorInfo",
-    "FragmentSensorInWorldCoord",
-    "FragmentSensorList",
-    "MainActivity"
-    //DSensorEventProcessor::class.java.simpleName
-    //*"DirectionHistory"
+    "DSensorEventProc"
+    //"DSensorManager"
+    //"FragmentCompass",
+    //"BaseSensorFragment",
+    //"FragmentSensorInfo",
+    //"FragmentSensorInWorldCoord",
+    //"FragmentSensorList",
+    //"MainActivity"
+    //DSensorEventProcessorOldImp::class.java.simpleName
+    /*"DirectionHistory"
     //DMathKt,
     //DSensorEvent.class.getSimpleName(),
-    //DSensorEventProcessor.class.getSimpleName(),
+    //DSensorEventProcessorOldImp.class.getSimpleName(),
     //"WorldHistory"*/
 )
 

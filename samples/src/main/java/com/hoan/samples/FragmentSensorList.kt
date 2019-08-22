@@ -6,7 +6,7 @@ import android.support.v4.app.Fragment
 import android.view.*
 import android.widget.BaseExpandableListAdapter
 import android.widget.ExpandableListView
-import com.hoan.dsensor.DSensor
+import com.hoan.dsensor.*
 import com.hoan.dsensor.utils.logger
 import kotlinx.android.synthetic.main.fragment_sensor_list.view.*
 import kotlinx.android.synthetic.main.sensor_expandable_list_child_item.view.*
@@ -81,10 +81,10 @@ class FragmentSensorList : Fragment() {
             mListItemLinkedHashMap[getString(R.string.compass)] = arrayListOf(CompassType.TYPE_COMPASS, CompassType.TYPE_3D_COMPASS,
                 CompassType.TYPE_COMPASS_AND_DEPRECATED_ORIENTATION, CompassType.TYPE_3D_COMPASS_AND_DEPRECATED_ORIENTATION)
             mListItemLinkedHashMap[getString(R.string.sensor_in_world_coord)] =
-                arrayListOf(DSensor.TYPE_DEVICE_ACCELEROMETER or DSensor.TYPE_WORLD_ACCELEROMETER,
-                    DSensor.TYPE_DEVICE_GRAVITY or DSensor.TYPE_WORLD_GRAVITY,
-                    DSensor.TYPE_DEVICE_LINEAR_ACCELERATION or DSensor.TYPE_WORLD_LINEAR_ACCELERATION,
-                    DSensor.TYPE_DEVICE_MAGNETIC_FIELD or DSensor.TYPE_WORLD_MAGNETIC_FIELD)
+                arrayListOf(TYPE_DEVICE_ACCELEROMETER or TYPE_WORLD_ACCELEROMETER,
+                    TYPE_DEVICE_GRAVITY or TYPE_WORLD_GRAVITY,
+                    TYPE_DEVICE_LINEAR_ACCELERATION or TYPE_WORLD_LINEAR_ACCELERATION,
+                    TYPE_DEVICE_MAGNETIC_FIELD or TYPE_WORLD_MAGNETIC_FIELD)
         }
 
         override fun getGroup(groupPosition: Int): String? {
@@ -151,10 +151,10 @@ class FragmentSensorList : Fragment() {
             if (dSensorTypes == null) return ""
 
             return when {
-                dSensorTypes and DSensor.TYPE_DEVICE_ACCELEROMETER != 0 -> getString(R.string.accelerometer)
-                dSensorTypes and DSensor.TYPE_DEVICE_GRAVITY != 0 -> getString(R.string.gravity)
-                dSensorTypes and DSensor.TYPE_DEVICE_LINEAR_ACCELERATION != 0 -> getString(R.string.linear_acceleration)
-                dSensorTypes and DSensor.TYPE_DEVICE_MAGNETIC_FIELD != 0 -> getString(R.string.magnetic_field)
+                dSensorTypes and TYPE_DEVICE_ACCELEROMETER != 0 -> getString(R.string.accelerometer)
+                dSensorTypes and TYPE_DEVICE_GRAVITY != 0 -> getString(R.string.gravity)
+                dSensorTypes and TYPE_DEVICE_LINEAR_ACCELERATION != 0 -> getString(R.string.linear_acceleration)
+                dSensorTypes and TYPE_DEVICE_MAGNETIC_FIELD != 0 -> getString(R.string.magnetic_field)
                 else -> ""
             }
         }

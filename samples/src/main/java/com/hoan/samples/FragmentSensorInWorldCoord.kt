@@ -2,21 +2,15 @@ package com.hoan.samples
 
 
 import android.os.Bundle
+import android.util.SparseArray
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.hoan.dsensor.DProcessedSensorEvent
-import com.hoan.dsensor.DSensor
-import com.hoan.dsensor.DSensorEvent
+import com.hoan.dsensor.*
 import com.hoan.dsensor.utils.logger
 import kotlinx.android.synthetic.main.fragment_sensor_in_world_basis.*
 import kotlinx.android.synthetic.main.fragment_sensor_in_world_basis.view.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-
-private const val DEVICE_COORDINATES = "device coordinates"
-private const val WORLD_COORDINATES = "world coordinates"
 
 
 class FragmentSensorInWorldCoord : BaseSensorFragment() {
@@ -57,59 +51,30 @@ class FragmentSensorInWorldCoord : BaseSensorFragment() {
         textview_sensor.text = getSensorName() ?: getString(R.string.error_unsupported_sensor)
     }
 
-    override fun onDSensorChanged(changedDSensorTypes: Int, processedSensorEvent: DProcessedSensorEvent) {
-        logger(FragmentSensorInWorldCoord::class.java.simpleName, "onDSensorChanged")
-        mCoroutineScop.launch(Dispatchers.Main) {
-            val dSensorEventHashMap: HashMap<String, DSensorEvent?> = getDSensorEvent(processedSensorEvent)
+    override fun onDSensorChanged(changedDSensorTypes: Int, resultMap: SparseArray<DSensorEvent>) {
+        logger(FragmentSensorInWorldCoord::class.java.simpleName, "onDSensorChanged: thread = ${Thread.currentThread()}")
+        mCoroutineScope.launch {
 
-            dSensorEventHashMap[DEVICE_COORDINATES]?.apply {
-                logger(FragmentSensorInWorldCoord::class.java.simpleName, "onDSensorChanged: timeStamp = ${timestamp}")
-                textview_sensor_x_value.text = values[0].toString()
-                textview_sensor_y_value.text = values[1].toString()
-                textview_sensor_z_value.text = values[2].toString()
-            }
+            logger("FragmentSensorInWorldCoord", "onDSensorChanged: timestamp = ${resultMap[0].timestamp}, thread = ${Thread.currentThread()}")
+            textview_sensor_x_value.text = resultMap[0].values[0].toString()
+            textview_sensor_y_value.text = resultMap[0].values[1].toString()
+            textview_sensor_z_value.text = resultMap[0].values[2].toString()
 
-            dSensorEventHashMap[WORLD_COORDINATES]?.apply {
-                textview_sensor_in_world_coord_x_value.text = values[0].toString()
-                textview_sensor_in_world_coord_y_value.text = values[1].toString()
-                textview_sensor_in_world_coord_z_value.text = values[2].toString()
-            }
+            textview_sensor_in_world_coord_x_value.text = resultMap[1].values[0].toString()
+            textview_sensor_in_world_coord_y_value.text = resultMap[1].values[1].toString()
+            textview_sensor_in_world_coord_z_value.text = resultMap[1].values[2].toString()
         }
     }
 
     private fun getSensorName(): String? {
+        logger(FragmentSensorInWorldCoord::class.java.simpleName, "getSensorName: mSensorType = $mSensorType")
         return when (mSensorType) {
-            DSensor.TYPE_DEVICE_ACCELEROMETER or DSensor.TYPE_WORLD_ACCELEROMETER -> getString(R.string.accelerometer)
-            DSensor.TYPE_DEVICE_GRAVITY or DSensor.TYPE_WORLD_GRAVITY -> getString(R.string.gravity)
-            DSensor.TYPE_DEVICE_LINEAR_ACCELERATION or DSensor.TYPE_WORLD_LINEAR_ACCELERATION -> getString(R.string.linear_acceleration)
-            DSensor.TYPE_DEVICE_MAGNETIC_FIELD or DSensor.TYPE_WORLD_MAGNETIC_FIELD -> getString(R.string.magnetic_field)
+            TYPE_DEVICE_ACCELEROMETER or TYPE_WORLD_ACCELEROMETER -> getString(R.string.accelerometer)
+            TYPE_DEVICE_GRAVITY or TYPE_WORLD_GRAVITY -> getString(R.string.gravity)
+            TYPE_DEVICE_LINEAR_ACCELERATION or TYPE_WORLD_LINEAR_ACCELERATION -> getString(R.string.linear_acceleration)
+            TYPE_DEVICE_MAGNETIC_FIELD or TYPE_WORLD_MAGNETIC_FIELD -> getString(R.string.magnetic_field)
             else -> null
         }
-    }
-
-    private fun getDSensorEvent(dProcessedSensorEvent: DProcessedSensorEvent): HashMap<String, DSensorEvent?> {
-        val resultHashMap: HashMap<String, DSensorEvent?> = HashMap()
-        when (mSensorType) {
-            DSensor.TYPE_DEVICE_ACCELEROMETER or DSensor.TYPE_WORLD_ACCELEROMETER -> {
-                resultHashMap[DEVICE_COORDINATES] = dProcessedSensorEvent.accelerometerInDeviceBasis
-                resultHashMap[WORLD_COORDINATES] = dProcessedSensorEvent.accelerometerInWorldBasis
-            }
-            DSensor.TYPE_DEVICE_GRAVITY or DSensor.TYPE_WORLD_GRAVITY -> {
-                resultHashMap[DEVICE_COORDINATES] = dProcessedSensorEvent.gravityInDeviceBasis
-                resultHashMap[WORLD_COORDINATES] = dProcessedSensorEvent.gravityInWorldBasis
-            }
-            DSensor.TYPE_DEVICE_LINEAR_ACCELERATION or DSensor.TYPE_WORLD_LINEAR_ACCELERATION -> {
-                resultHashMap[DEVICE_COORDINATES] = dProcessedSensorEvent.linearAccelerationInDeviceBasis
-                resultHashMap[WORLD_COORDINATES] = dProcessedSensorEvent.linearAccelerationInWorldBasis
-            }
-            DSensor.TYPE_DEVICE_MAGNETIC_FIELD or DSensor.TYPE_WORLD_MAGNETIC_FIELD -> {
-                resultHashMap[DEVICE_COORDINATES] = dProcessedSensorEvent.magneticFieldInDeviceBasis
-                resultHashMap[WORLD_COORDINATES] = dProcessedSensorEvent.magneticFieldInWorldBasis
-            }
-            else -> return resultHashMap
-        }
-
-        return resultHashMap
     }
 
     override fun showError(errorMessage: String?) {

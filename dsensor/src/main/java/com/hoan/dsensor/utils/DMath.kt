@@ -2,6 +2,10 @@ package com.hoan.dsensor.utils
 
 import kotlin.math.*
 
+internal const val TWENTY_FIVE_DEGREE_IN_RADIAN = 0.436332313f
+
+internal const val ONE_FIFTY_FIVE_DEGREE_IN_RADIAN = 2.7052603f
+
 
 /**
  * Math utility methods
@@ -37,8 +41,8 @@ fun scaleVector(vector: FloatArray, scaleFactor: Float): FloatArray {
     return result
 }
 
-fun productOfSquareMatrixAndVector(matrix: FloatArray?, vector: FloatArray?): FloatArray? {
-    if (matrix == null || vector == null || matrix.size != vector.size * vector.size) {
+fun productOfSquareMatrixAndVector(matrix: FloatArray, vector: FloatArray): FloatArray? {
+    if (matrix.size != vector.size * vector.size) {
         return null
     }
     val numberOfColumns = vector.size

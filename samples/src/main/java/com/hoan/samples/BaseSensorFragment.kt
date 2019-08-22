@@ -10,7 +10,7 @@ import kotlinx.coroutines.cancel
 
 
 abstract class BaseSensorFragment : Fragment(), DSensorEventListener {
-    protected val mCoroutineScop = MainScope()
+    protected val mCoroutineScope = MainScope()
 
     protected var mSensorType: Int = 0
 
@@ -49,18 +49,13 @@ abstract class BaseSensorFragment : Fragment(), DSensorEventListener {
     override fun onPause() {
         super.onPause()
 
-        mCoroutineScop.cancel()
-    }
-
-    override fun onDetach() {
-        super.onDetach()
-
-        logger(BaseSensorFragment::class.java.simpleName, "onDetach")
+        mCoroutineScope.cancel()
     }
 
     abstract fun showError(errorMessage: String?)
 
     private fun getErrorMessage(errors: Set<Int>): String {
+        logger(BaseSensorFragment::class.java.simpleName, "getErrorMessage: ${errors.toString()}")
         if (errors.isEmpty()) return ""
 
         var errorMessage = ""

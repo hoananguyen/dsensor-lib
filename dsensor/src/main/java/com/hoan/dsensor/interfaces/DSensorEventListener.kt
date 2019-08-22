@@ -1,10 +1,11 @@
 package com.hoan.dsensor.interfaces
 
-import com.hoan.dsensor.DProcessedSensorEvent
+import android.util.SparseArray
+import com.hoan.dsensor.DSensorEvent
 
 /**
  * Call back for SensorManager.startDSensor
  */
 interface DSensorEventListener {
-    fun onDSensorChanged(changedDSensorTypes: Int, processedSensorEvent: DProcessedSensorEvent)
+    fun onDSensorChanged(changedDSensorTypes: Int, resultMap: SparseArray<DSensorEvent>)
 }
