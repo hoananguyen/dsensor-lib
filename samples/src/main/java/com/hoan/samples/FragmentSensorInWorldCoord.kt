@@ -55,14 +55,20 @@ class FragmentSensorInWorldCoord : BaseSensorFragment() {
         logger(FragmentSensorInWorldCoord::class.java.simpleName, "onDSensorChanged: thread = ${Thread.currentThread()}")
         mCoroutineScope.launch {
 
-            logger("FragmentSensorInWorldCoord", "onDSensorChanged: timestamp = ${resultMap[0].timestamp}, thread = ${Thread.currentThread()}")
-            textview_sensor_x_value.text = resultMap[0].values[0].toString()
-            textview_sensor_y_value.text = resultMap[0].values[1].toString()
-            textview_sensor_z_value.text = resultMap[0].values[2].toString()
+            logger("FragmentSensorInWorldCoord", "onDSensorChanged: timestamp = ${resultMap.valueAt(0)?.timestamp}, thread = ${Thread.currentThread()}")
 
-            textview_sensor_in_world_coord_x_value.text = resultMap[1].values[0].toString()
-            textview_sensor_in_world_coord_y_value.text = resultMap[1].values[1].toString()
-            textview_sensor_in_world_coord_z_value.text = resultMap[1].values[2].toString()
+            val dSensorEvents = getDSensorEvents(resultMap)
+            dSensorEvents.first?.apply {
+                textview_sensor_x_value.text = values[0].toString()
+                textview_sensor_y_value.text = values[1].toString()
+                textview_sensor_z_value.text = values[2].toString()
+            }
+
+            dSensorEvents.second?.apply {
+                textview_sensor_in_world_coord_x_value.text = values[0].toString()
+                textview_sensor_in_world_coord_y_value.text = values[1].toString()
+                textview_sensor_in_world_coord_z_value.text = values[2].toString()
+            }
         }
     }
 
@@ -75,6 +81,21 @@ class FragmentSensorInWorldCoord : BaseSensorFragment() {
             TYPE_DEVICE_MAGNETIC_FIELD or TYPE_WORLD_MAGNETIC_FIELD -> getString(R.string.magnetic_field)
             else -> null
         }
+    }
+
+    private fun getDSensorEvents(resultMap: SparseArray<DSensorEvent>): Pair<DSensorEvent?, DSensorEvent?> {
+        var first: DSensorEvent? = null
+        var second: DSensorEvent? = null
+        for (i in 0..resultMap.size() -1) {
+            if (resultMap.keyAt(i) and mSensorType != 0) {
+                if (first == null) {
+                    first = resultMap.valueAt(i)
+                } else {
+                    second = resultMap.valueAt(i)
+                }
+            }
+        }
+        return Pair(first, second)
     }
 
     override fun showError(errorMessage: String?) {

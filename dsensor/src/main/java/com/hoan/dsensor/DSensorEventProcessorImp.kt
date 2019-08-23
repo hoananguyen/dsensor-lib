@@ -122,7 +122,7 @@ class DSensorEventProcessorImp(dSensorTypes: Int,
             mRegisteredWorldCoordinatesMap?.let {
                 for (item in it) {
                     if (mSaveDSensorMap[item.second] == null) {
-                        mSaveDSensorMap.put(item.first, DSensorEvent(item.second, 0, 0, FloatArray(3)))
+                        mSaveDSensorMap.put(item.second, DSensorEvent(item.second, 0, 0, FloatArray(3)))
                     }
                 }
             }
