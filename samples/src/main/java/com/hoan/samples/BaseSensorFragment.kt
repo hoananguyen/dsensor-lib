@@ -55,7 +55,7 @@ abstract class BaseSensorFragment : Fragment(), DSensorEventListener {
     abstract fun showError(errorMessage: String?)
 
     private fun getErrorMessage(errors: Set<Int>): String {
-        logger(BaseSensorFragment::class.java.simpleName, "getErrorMessage: ${errors.toString()}")
+        logger(BaseSensorFragment::class.java.simpleName, "getErrorMessage: ${errors}")
         if (errors.isEmpty()) return ""
 
         var errorMessage = ""

@@ -86,7 +86,7 @@ class FragmentSensorInWorldCoord : BaseSensorFragment() {
     private fun getDSensorEvents(resultMap: SparseArray<DSensorEvent>): Pair<DSensorEvent?, DSensorEvent?> {
         var first: DSensorEvent? = null
         var second: DSensorEvent? = null
-        for (i in 0..resultMap.size() -1) {
+        for (i in 0 until resultMap.size()) {
             if (resultMap.keyAt(i) and mSensorType != 0) {
                 if (first == null) {
                     first = resultMap.valueAt(i)
