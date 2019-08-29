@@ -19,40 +19,40 @@ import kotlin.system.measureTimeMillis
 private const val ALPHA = .1f
 private const val ONE_MINUS_ALPHA = 1 - ALPHA
 
-open class DSensorEventProcessorImp(dSensorTypes: Int,
+class DSensorEventProcessorImp(dSensorTypes: Int,
                                dSensorEventListener: DSensorEventListener,
                                hasGravitySensor: Boolean = true,
                                hasLinearAccelerationSensor: Boolean = true,
                                historyMaxLength: Int = DEFAULT_HISTORY_SIZE) : DSensorEventProcessor {
 
-    protected val mCoroutineScope = CoroutineScope(Dispatchers.Default)
+    private val mCoroutineScope = CoroutineScope(Dispatchers.Default)
 
-    protected val mDSensorEventListener: DSensorEventListener = dSensorEventListener
+    private val mDSensorEventListener: DSensorEventListener = dSensorEventListener
 
-    protected val mRegisteredDSensorTypes = dSensorTypes
+    private val mRegisteredDSensorTypes = dSensorTypes
 
     /**
-     * map to keep history directions of compass for averaging.
+     * list to keep directions of compass for averaging.
      */
-    protected lateinit var mRegisteredDirectionList: List<Direction>
+    private lateinit var mRegisteredDirectionList: List<Direction>
 
     /**
      * List containing registered world coordinates types and its associate raw sensor.
      * i.e. TYPE_WORLD_COORDINATES_GRAVITY and TYPE_DEVICE_GRAVITY
      */
-    protected lateinit var mRegisteredWorldCoordinatesList:List<Pair<Int, Int>>
+    private lateinit var mRegisteredWorldCoordinatesList:List<Pair<Int, Int>>
 
-    protected lateinit var mSaveDSensorMap: SparseArrayCompat<DSensorEvent>
+    private lateinit var mSaveDSensorMap: SparseArrayCompat<DSensorEvent>
 
-    protected lateinit var mRotationMatrix: FloatArray
+    private lateinit var mRotationMatrix: FloatArray
 
     /**
      * Property to indicate whether gravity should be calculated i.e device does not gravity sensor
      * and it is required to process other data.
      */
-    protected val mCalculateGravity: Boolean
+    private val mCalculateGravity: Boolean
 
-    protected val mCalculateLinearAcceleration: Boolean
+    private val mCalculateLinearAcceleration: Boolean
 
     init {
         getRegisteredDirectionList(dSensorTypes, historyMaxLength)?.let {

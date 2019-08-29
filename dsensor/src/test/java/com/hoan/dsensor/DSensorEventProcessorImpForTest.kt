@@ -25,9 +25,9 @@ class DSensorEventProcessorImpForTest(dSensorTypes: Int,
                                hasLinearAccelerationSensor: Boolean = true,
                                historyMaxLength: Int = DEFAULT_HISTORY_SIZE) : DSensorEventProcessor {
 
-    protected val mCoroutineScope = CoroutineScope(Dispatchers.Default)
+    private val mCoroutineScope = CoroutineScope(Dispatchers.Default)
 
-    protected val mDSensorEventListener: DSensorEventListener = dSensorEventListener
+    private val mDSensorEventListener: DSensorEventListener = dSensorEventListener
 
     val mRegisteredDSensorTypes = dSensorTypes
 
