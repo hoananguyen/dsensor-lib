@@ -18,8 +18,20 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    flavorDimensions "version"
+    productFlavors {
+        fortesting {
+            dimension "version"
+            versionNameSuffix "-fortesting"
+        }
+        full {
+            dimension "version"
+            versionNameSuffix "-full"
         }
     }
 

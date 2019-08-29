@@ -19,7 +19,7 @@ import kotlin.system.measureTimeMillis
 private const val ALPHA = .1f
 private const val ONE_MINUS_ALPHA = 1 - ALPHA
 
-open class DSensorEventProcessorImp(dSensorTypes: Int,
+class DSensorEventProcessorImpForTest(dSensorTypes: Int,
                                dSensorEventListener: DSensorEventListener,
                                hasGravitySensor: Boolean = true,
                                hasLinearAccelerationSensor: Boolean = true,
@@ -29,30 +29,30 @@ open class DSensorEventProcessorImp(dSensorTypes: Int,
 
     protected val mDSensorEventListener: DSensorEventListener = dSensorEventListener
 
-    protected val mRegisteredDSensorTypes = dSensorTypes
+    val mRegisteredDSensorTypes = dSensorTypes
 
     /**
      * map to keep history directions of compass for averaging.
      */
-    protected lateinit var mRegisteredDirectionList: List<Direction>
+    lateinit var mRegisteredDirectionList: List<DirectionForTest>
 
     /**
      * List containing registered world coordinates types and its associate raw sensor.
      * i.e. TYPE_WORLD_COORDINATES_GRAVITY and TYPE_DEVICE_GRAVITY
      */
-    protected lateinit var mRegisteredWorldCoordinatesList:List<Pair<Int, Int>>
+    lateinit var mRegisteredWorldCoordinatesList:List<Pair<Int, Int>>
 
-    protected lateinit var mSaveDSensorMap: SparseArrayCompat<DSensorEvent>
+    lateinit var mSaveDSensorMap: SparseArrayCompat<DSensorEvent>
 
-    protected lateinit var mRotationMatrix: FloatArray
+    lateinit var mRotationMatrix: FloatArray
 
     /**
      * Property to indicate whether gravity should be calculated i.e device does not gravity sensor
      * and it is required to process other data.
      */
-    protected val mCalculateGravity: Boolean
+    val mCalculateGravity: Boolean
 
-    protected val mCalculateLinearAcceleration: Boolean
+    val mCalculateLinearAcceleration: Boolean
 
     init {
         getRegisteredDirectionList(dSensorTypes, historyMaxLength)?.let {
@@ -72,11 +72,11 @@ open class DSensorEventProcessorImp(dSensorTypes: Int,
         }
     }
 
-    private fun getRegisteredDirectionList(dSensorTypes: Int, historyMaxLength: Int = DEFAULT_HISTORY_SIZE): List<Direction>? {
-        val registeredDirectionList = ArrayList<Direction>(2)
+    private fun getRegisteredDirectionList(dSensorTypes: Int, historyMaxLength: Int = DEFAULT_HISTORY_SIZE): List<DirectionForTest>? {
+        val registeredDirectionList = ArrayList<DirectionForTest>(2)
         for (directionType in getDirectionTypes()) {
             if (dSensorTypes and directionType != 0) {
-                registeredDirectionList.add(Direction(directionType, historyMaxLength))
+                registeredDirectionList.add(DirectionForTest(directionType, historyMaxLength))
             }
         }
 

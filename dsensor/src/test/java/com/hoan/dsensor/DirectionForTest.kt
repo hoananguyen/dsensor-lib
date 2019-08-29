@@ -6,14 +6,16 @@ import java.util.*
 import kotlin.math.atan2
 import kotlin.math.round
 
-const val DEFAULT_HISTORY_SIZE = 10
-
-class Direction(dDirectionSensorType: Int, historyMaxLength: Int = DEFAULT_HISTORY_SIZE) {
+class DirectionForTest(dDirectionSensorType: Int, historyMaxLength: Int = DEFAULT_HISTORY_SIZE) {
     private val mDirectionSensorType = dDirectionSensorType
     private val mRotationMatrixIndices: Pair<Int, Int> = getRotationMatrixIndices(dDirectionSensorType)
     private val mIsPositive: Boolean = isPositive(dDirectionSensorType)
     private val mIsCamera: Boolean = isCamera(dDirectionSensorType)
     private val mDirectionHistory = DirectionHistory(historyMaxLength)
+
+    fun getDirectionType(): Int {
+        return mDirectionSensorType
+    }
 
     fun getDirectionDSensorEvent(inclination: DSensorEvent, rotationMatrix: FloatArray): DSensorEvent {
         return when {

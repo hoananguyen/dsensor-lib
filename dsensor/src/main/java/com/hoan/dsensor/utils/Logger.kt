@@ -10,20 +10,17 @@ private const val WRITE_TO_FILE = false
 
 private val DEBUG_CLASSES = arrayOf(
     "dummy",
-    //"DSensorEventProc"
+    "DSensorEventProcessorImp"
     //"DSensorManager"
     //"FragmentCompass",
     //"BaseSensorFragment",
     //"FragmentSensorInfo",
-    "FragmentSensorInWorldCoord"
+    //"FragmentSensorInWorldCoord"
     //"FragmentSensorList",
     //"MainActivity"
-    //DSensorEventProcessorOldImp::class.java.simpleName
     /*"DirectionHistory"
     //DMathKt,
-    //DSensorEvent.class.getSimpleName(),
-    //DSensorEventProcessorOldImp.class.getSimpleName(),
-    //"WorldHistory"*/
+    //DSensorEvent.class.getSimpleName(),*/
 )
 
 @Synchronized
