@@ -38,6 +38,7 @@ fun getDirectionTypes(): List<Int> {
             Sensor.TYPE_MAGNETIC_FIELD -> TYPE_DEVICE_MAGNETIC_FIELD
             Sensor.TYPE_ROTATION_VECTOR -> TYPE_ROTATION_VECTOR
             Sensor.TYPE_GYROSCOPE -> TYPE_GYROSCOPE
+            Sensor.TYPE_ORIENTATION -> TYPE_DEPRECATED_ORIENTATION
             else -> ERROR_UNSUPPORTED_TYPE
         }
     }

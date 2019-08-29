@@ -181,11 +181,10 @@ class DSensorManager(context: Context): SensorEventListener {
 
         mSensorManager.unregisterListener(this)
 
-        mDSensorEventProcessor?.run {
+        mDSensorEventProcessor?.apply {
             finish()
+            mDSensorEventProcessor = null
         }
-
-        mDSensorEventProcessor = null
 
         if (mSensorThread.isAlive) {
             mSensorThread.quit()

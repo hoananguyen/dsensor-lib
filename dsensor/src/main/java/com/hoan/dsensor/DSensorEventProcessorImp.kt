@@ -140,7 +140,10 @@ open class DSensorEventProcessorImp(dSensorTypes: Int,
     }
 
     override fun finish() {
-        mCoroutineScope.cancel()
+        logger("DSensorEventProcessorImp", "finish")
+        if (mCoroutineScope.isActive) {
+            mCoroutineScope.cancel()
+        }
     }
 
     override fun onDSensorChanged(dSensorEvent: DSensorEvent) {
