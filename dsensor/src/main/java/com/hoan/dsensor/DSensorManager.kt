@@ -35,6 +35,7 @@ class DSensorManager(context: Context): SensorEventListener {
     }
 
     override fun onSensorChanged(event: SensorEvent) {
+        logger("DSensorManager", "onSensorChanged: ${event.sensor.name} value = ${event.values.contentToString()}")
         mDSensorEventProcessor?.run {
             onDSensorChanged(DSensorEvent(getDSensorType(event.sensor.type), event.accuracy, event.timestamp, event.values))
         }

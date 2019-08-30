@@ -9,7 +9,6 @@ import android.view.ViewGroup
 import com.hoan.dsensor.*
 import kotlinx.android.synthetic.main.fragment_compass.*
 import kotlinx.coroutines.launch
-import kotlin.math.round
 import kotlin.math.roundToInt
 
 
@@ -48,7 +47,9 @@ class FragmentCompass : BaseSensorFragment() {
     override fun onSensorChanged(newSensorType: Int) {
         super.onSensorChanged(newSensorType)
 
-        setOrientationViewsVisibility()
+        if (isAdded) {
+            setOrientationViewsVisibility()
+        }
     }
 
     private fun setOrientationViewsVisibility() {
@@ -69,7 +70,7 @@ class FragmentCompass : BaseSensorFragment() {
             when {
                 (TYPE_DEPRECATED_ORIENTATION and changedDSensorTypes) != 0 -> {
                     val orientation = resultMap[TYPE_DEPRECATED_ORIENTATION]?.values!![0]
-                    textview_orientation_value.text = round(orientation).toString()
+                    textview_orientation_value.text = convertToDegree(orientation).toString()
                 }
                 else -> {
                     resultMap[TYPE_NEGATIVE_Z_AXIS_DIRECTION]?.apply {

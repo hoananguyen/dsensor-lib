@@ -18,12 +18,11 @@ abstract class BaseSensorFragment : Fragment(), DSensorEventListener {
 
     open fun onSensorChanged(newSensorType: Int) {
         logger(BaseSensorFragment::class.java.simpleName, "onSensorChanged")
-        if (newSensorType == mSensorType) return
-
-        stopSensor()
-        mSensorType = newSensorType
-
-        startSensor()
+        if (newSensorType != mSensorType) {
+            stopSensor()
+            mSensorType = newSensorType
+            startSensor()
+        }
     }
 
     fun stopSensor() {

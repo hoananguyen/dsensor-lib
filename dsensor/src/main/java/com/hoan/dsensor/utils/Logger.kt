@@ -15,7 +15,7 @@ private val DEBUG_CLASSES = arrayOf(
     //"FragmentCompass",
     //"BaseSensorFragment",
     //"FragmentSensorInfo",
-    //"FragmentSensorInWorldCoord"
+    //"FragmentSensorInWorldCoord",
     //"FragmentSensorList",
     //"MainActivity"
     /*"DirectionHistory"

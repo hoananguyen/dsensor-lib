@@ -44,6 +44,7 @@ class MainActivity : AppCompatActivity(), FragmentSensorList.OnFragmentInteracti
         val backStackCount = supportFragmentManager.backStackEntryCount
         if (backStackCount > 0) {
             val fragmentName = supportFragmentManager.getBackStackEntryAt(backStackCount - 1).name
+            logger(MainActivity::class.java.simpleName, "onChildItemSelected: fragment name = $fragmentName")
             val topOfStackFragment = supportFragmentManager.findFragmentByTag(fragmentName)
             if (topOfStackFragment is BaseSensorFragment) {
                 if (getString(R.string.compass) == group && FragmentCompass::class.java.simpleName == fragmentName

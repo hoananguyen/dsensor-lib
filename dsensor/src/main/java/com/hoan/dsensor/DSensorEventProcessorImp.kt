@@ -7,17 +7,8 @@ import com.hoan.dsensor.interfaces.DSensorEventListener
 import com.hoan.dsensor.interfaces.DSensorEventProcessor
 import com.hoan.dsensor.utils.*
 import kotlinx.coroutines.*
-import kotlin.math.acos
-import kotlin.math.asin
 import kotlin.math.atan2
 import kotlin.system.measureTimeMillis
-
-/**
- * Low pass filter constant.
- * Use to filter linear acceleration from accelerometer values.
- */
-private const val ALPHA = .1f
-private const val ONE_MINUS_ALPHA = 1 - ALPHA
 
 class DSensorEventProcessorImp(dSensorTypes: Int,
                                dSensorEventListener: DSensorEventListener,
@@ -25,7 +16,7 @@ class DSensorEventProcessorImp(dSensorTypes: Int,
                                hasLinearAccelerationSensor: Boolean = true,
                                historyMaxLength: Int = DEFAULT_HISTORY_SIZE) : DSensorEventProcessor {
 
-    private val mCoroutineScope = CoroutineScope(Dispatchers.Default)
+    private lateinit var mOnDSensorChangedResult: Deferred<Int>
 
     private val mDSensorEventListener: DSensorEventListener = dSensorEventListener
 
@@ -141,25 +132,28 @@ class DSensorEventProcessorImp(dSensorTypes: Int,
 
     override fun finish() {
         logger("DSensorEventProcessorImp", "finish")
-        if (mCoroutineScope.isActive) {
-            mCoroutineScope.cancel()
+        if (::mOnDSensorChangedResult.isInitialized) {
+            CoroutineScope(Dispatchers.Default).launch {
+                mOnDSensorChangedResult.cancelAndJoin()
+            }
         }
+        //mCoroutineScope.cancel()
     }
 
     override fun onDSensorChanged(dSensorEvent: DSensorEvent) {
         val time = measureTimeMillis {
             runBlocking {
                 val resultMap = SparseArray<DSensorEvent>()
-                val result = mCoroutineScope.async {
-                    when (dSensorEvent.sensorType) {
-                        TYPE_DEVICE_ACCELEROMETER -> onAccelerometerChanged(dSensorEvent, resultMap)
-                        TYPE_DEVICE_GRAVITY -> onGravityChanged(dSensorEvent, resultMap)
-                        TYPE_DEVICE_MAGNETIC_FIELD -> onMagneticFieldChanged(dSensorEvent, resultMap)
-                        TYPE_DEVICE_LINEAR_ACCELERATION -> onLinearAccelerationChanged(dSensorEvent, resultMap)
-                        else -> onDSensorChangedDefaultHandler(dSensorEvent, resultMap)
+                coroutineScope {
+                    mOnDSensorChangedResult = when (dSensorEvent.sensorType) {
+                        TYPE_DEVICE_ACCELEROMETER -> async { onAccelerometerChanged(dSensorEvent, resultMap) }
+                        TYPE_DEVICE_GRAVITY -> async { onGravityChanged(dSensorEvent, resultMap) }
+                        TYPE_DEVICE_MAGNETIC_FIELD -> async { onMagneticFieldChanged(dSensorEvent, resultMap) }
+                        TYPE_DEVICE_LINEAR_ACCELERATION -> async { onLinearAccelerationChanged(dSensorEvent, resultMap) }
+                        else -> async { onDSensorChangedDefaultHandler(dSensorEvent, resultMap) }
                     }
                 }
-                val changedSensorTypes = result.await()
+                val changedSensorTypes = mOnDSensorChangedResult.await()
                 if (changedSensorTypes != 0) {
                     mDSensorEventListener.onDSensorChanged(changedSensorTypes, resultMap)
                 }
@@ -179,7 +173,9 @@ class DSensorEventProcessorImp(dSensorTypes: Int,
         }
 
         if (mCalculateGravity) {
-            changedSensorTypes = changedSensorTypes or onGravityChanged(calculateGravity(), resultMap, changedSensorTypes)
+            changedSensorTypes = changedSensorTypes or
+                    onGravityChanged(calculateGravity(mSaveDSensorMap[TYPE_DEVICE_ACCELEROMETER]!!, mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!),
+                        resultMap, changedSensorTypes)
         }
 
         return changedSensorTypes
@@ -196,7 +192,7 @@ class DSensorEventProcessorImp(dSensorTypes: Int,
         }
 
         if (mCalculateLinearAcceleration) {
-            val linearAccelerationEvent by lazy { calculateLinearAcceleration() }
+            val linearAccelerationEvent by lazy { calculateLinearAcceleration(mSaveDSensorMap[TYPE_DEVICE_ACCELEROMETER]!!, mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!) }
             mSaveDSensorMap[TYPE_DEVICE_LINEAR_ACCELERATION]?.apply {
                 saveDSensorEvent(linearAccelerationEvent)
             }
@@ -274,33 +270,21 @@ class DSensorEventProcessorImp(dSensorTypes: Int,
         return event.sensorType
     }
 
-    private fun calculateLinearAcceleration(): DSensorEvent {
-        logger(DSensorEventProcessorImp::class.java.simpleName, "calculateLinearAcceleration")
-        val accelerometer = mSaveDSensorMap[TYPE_DEVICE_ACCELEROMETER]!!
-        val gravity = mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!
-        val values = FloatArray(3)
-        for (i in 0..2) {
-            values[i] = accelerometer.values[i] - gravity.values[i]
-        }
-
-        return DSensorEvent(TYPE_DEVICE_LINEAR_ACCELERATION, accelerometer.accuracy, accelerometer.timestamp, values)
-    }
-
     private fun processRegisteredDSensorUsingRotationMatrix(resultMap: SparseArray<DSensorEvent>): Int {
         var changedSensorTypes = 0
         if (mRegisteredDSensorTypes and TYPE_PITCH != 0) {
-            changedSensorTypes = changedSensorTypes or setResultDSensorEventMap(calculatePitch(), resultMap)
+            changedSensorTypes = changedSensorTypes or setResultDSensorEventMap(calculatePitch(mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!, mRotationMatrix), resultMap)
         }
 
         if (mRegisteredDSensorTypes and TYPE_ROLL != 0) {
-            changedSensorTypes = changedSensorTypes or setResultDSensorEventMap(calculateRoll(), resultMap)
+            changedSensorTypes = changedSensorTypes or setResultDSensorEventMap(calculateRoll(mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!, mRotationMatrix), resultMap)
         }
 
         if (::mRegisteredWorldCoordinatesList.isInitialized) {
             changedSensorTypes = changedSensorTypes or setResultDSensorEventListForWorldCoordinatesDSensor(resultMap)
         }
 
-        val inclinationEvent by lazy { calculateInclination() }
+        val inclinationEvent by lazy { calculateInclination(mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!, mRotationMatrix) }
         if (mRegisteredDSensorTypes and TYPE_INCLINATION != 0) {
             changedSensorTypes = changedSensorTypes or setResultDSensorEventMap(inclinationEvent, resultMap)
         }
@@ -319,19 +303,12 @@ class DSensorEventProcessorImp(dSensorTypes: Int,
     private fun setResultDSensorEventListForWorldCoordinatesDSensor(resultMap: SparseArray<DSensorEvent>) : Int {
         var changedSensorTypes = 0
         for (item in mRegisteredWorldCoordinatesList) {
-            val dSensorEvent = mSaveDSensorMap[item.second]!!
-            productOfSquareMatrixAndVector(mRotationMatrix, dSensorEvent.values)?.apply {
-                changedSensorTypes = changedSensorTypes or
-                        setResultDSensorEventMap(DSensorEvent(item.first, dSensorEvent.accuracy, dSensorEvent.timestamp, this.copyOf()), resultMap)
+            transformToWorldCoordinate(item.first, mSaveDSensorMap[item.second]!!, mRotationMatrix)?.let {
+                changedSensorTypes = changedSensorTypes or setResultDSensorEventMap(it, resultMap)
             }
         }
 
         return changedSensorTypes
-    }
-
-    private fun calculateInclination(): DSensorEvent {
-        val gravityDSensorEvent = mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!
-        return DSensorEvent(TYPE_INCLINATION, gravityDSensorEvent.accuracy, gravityDSensorEvent.timestamp, floatArrayOf(acos(mRotationMatrix[8])))
     }
 
     private fun setResultDSensorEventForDirection(inclinationEvent: DSensorEvent, resultMap: SparseArray<DSensorEvent>): Int {
@@ -359,81 +336,25 @@ class DSensorEventProcessorImp(dSensorTypes: Int,
     private fun processRegisteredDSensorUsingGravity(resultMap: SparseArray<DSensorEvent>): Int {
         var changedSensorTypes = 0
         val gravityNorm by lazy { calculateNorm(mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!.values) }
-        val inclinationEvent by lazy { calculateInclination(gravityNorm)}
+        val inclinationEvent by lazy { calculateInclination(gravityNorm, mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!)}
 
         if (mRegisteredDSensorTypes and TYPE_INCLINATION != 0) {
             changedSensorTypes = changedSensorTypes or setResultDSensorEventMap(inclinationEvent, resultMap)
         }
 
         if (mRegisteredDSensorTypes and TYPE_DEVICE_ROTATION != 0) {
-            changedSensorTypes = changedSensorTypes or setResultDSensorEventMap(calculateDeviceRotation(gravityNorm, inclinationEvent), resultMap)
+            changedSensorTypes = changedSensorTypes or setResultDSensorEventMap(calculateDeviceRotation(gravityNorm, inclinationEvent,
+                mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!), resultMap)
         }
 
         if (mRegisteredDSensorTypes and TYPE_PITCH != 0) {
-            changedSensorTypes = changedSensorTypes or setResultDSensorEventMap(calculatePitch(gravityNorm), resultMap)
+            changedSensorTypes = changedSensorTypes or setResultDSensorEventMap(calculatePitch(gravityNorm, mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!), resultMap)
         }
 
         if (mRegisteredDSensorTypes and TYPE_ROLL != 0) {
-            changedSensorTypes = changedSensorTypes or setResultDSensorEventMap(calculateRoll(gravityNorm), resultMap)
+            changedSensorTypes = changedSensorTypes or setResultDSensorEventMap(calculateRoll(gravityNorm, mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!), resultMap)
         }
 
         return changedSensorTypes
     }
-
-    private fun calculateInclination(gravityNorm: Float): DSensorEvent {
-        val gravityEvent = mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!
-        return DSensorEvent(TYPE_INCLINATION, gravityEvent.accuracy, gravityEvent.timestamp, floatArrayOf(gravityEvent.values[2] / gravityNorm))
-    }
-
-    private fun calculateRoll(): DSensorEvent {
-        val gravity = mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!
-        return DSensorEvent(TYPE_ROLL, gravity.accuracy, gravity.timestamp, floatArrayOf(atan2(-mRotationMatrix[6], mRotationMatrix[8])))
-    }
-
-    private fun calculateRoll(gravityNorm: Float): DSensorEvent {
-        val gravityEvent = mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!
-        return DSensorEvent(TYPE_ROLL, gravityEvent.accuracy, gravityEvent.timestamp,
-            floatArrayOf(atan2(-gravityEvent.values[0] / gravityNorm, gravityEvent.values[2] / gravityNorm)))
-    }
-
-    private fun calculatePitch(gravityNorm: Float): DSensorEvent {
-        val gravityEvent = mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!
-        return DSensorEvent(TYPE_PITCH, gravityEvent.accuracy, gravityEvent.timestamp,
-            floatArrayOf(asin(-gravityEvent.values[1] / gravityNorm)))
-    }
-
-    private fun calculatePitch(): DSensorEvent {
-        val gravity = mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!
-        return DSensorEvent(TYPE_PITCH, gravity.accuracy, gravity.timestamp, floatArrayOf(asin(-mRotationMatrix[7])))
-    }
-
-    private fun calculateDeviceRotation(gravityNorm: Float, inclinationEvent: DSensorEvent): DSensorEvent {
-        val deviceRotation = if (inclinationEvent.values[0] < TWENTY_FIVE_DEGREE_IN_RADIAN
-            ||inclinationEvent.values[0] > ONE_FIFTY_FIVE_DEGREE_IN_RADIAN) {
-            Float.NaN
-        }
-        else {
-            atan2(mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!.values[0] / gravityNorm, mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!.values[1] / gravityNorm)
-        }
-
-        return DSensorEvent(TYPE_DEVICE_ROTATION, inclinationEvent.accuracy, inclinationEvent.timestamp, floatArrayOf(deviceRotation))
-    }
-
-    private fun calculateGravity(): DSensorEvent {
-        val accelerometer = mSaveDSensorMap[TYPE_DEVICE_ACCELEROMETER]!!
-        val gravity = mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!
-        if (gravity.timestamp == 0L) {
-            gravity.values = accelerometer.values.copyOf()
-        } else {
-            for (i in 0..2) {
-                gravity.values[i] = ALPHA * accelerometer.values[i] + ONE_MINUS_ALPHA * gravity.values[i]
-            }
-        }
-
-        gravity.accuracy = accelerometer.accuracy
-        gravity.timestamp = accelerometer.timestamp
-
-        return gravity
-    }
-
 }

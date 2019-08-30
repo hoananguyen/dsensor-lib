@@ -47,8 +47,9 @@ class FragmentSensorInWorldCoord : BaseSensorFragment() {
     override fun onSensorChanged(newSensorType: Int) {
         super.onSensorChanged(newSensorType)
         logger(FragmentSensorInWorldCoord::class.java.simpleName, "onSensorChanged")
-
-        textview_sensor.text = getSensorName() ?: getString(R.string.error_unsupported_sensor)
+        if (isAdded) {
+            textview_sensor.text = getSensorName() ?: getString(R.string.error_unsupported_sensor)
+        }
     }
 
     override fun onDSensorChanged(changedDSensorTypes: Int, resultMap: SparseArray<DSensorEvent>) {
