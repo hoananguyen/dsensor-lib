@@ -2,10 +2,12 @@ package com.hoan.samples
 
 import android.content.Context
 import android.os.Bundle
-import android.support.v4.app.Fragment
-import android.view.*
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.BaseExpandableListAdapter
 import android.widget.ExpandableListView
+import androidx.fragment.app.Fragment
 import com.hoan.dsensor.*
 import com.hoan.dsensor.utils.logger
 import kotlinx.android.synthetic.main.fragment_sensor_list.view.*

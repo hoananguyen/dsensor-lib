@@ -1,7 +1,7 @@
 package com.hoan.samples
 
 
-import android.support.v4.app.Fragment
+import androidx.fragment.app.Fragment
 import com.hoan.dsensor.*
 import com.hoan.dsensor.interfaces.DSensorEventListener
 import com.hoan.dsensor.utils.logger

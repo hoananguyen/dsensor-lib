@@ -4,7 +4,6 @@ package com.hoan.samples
 import android.hardware.Sensor
 import android.os.Build
 import android.os.Bundle
-import android.support.v4.app.Fragment
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.style.StyleSpan
@@ -13,6 +12,7 @@ import android.util.SparseArray
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.Fragment
 import com.hoan.dsensor.DSensorManager
 import com.hoan.dsensor.utils.logger
 import kotlinx.android.synthetic.main.fragment_sensor_info.view.*

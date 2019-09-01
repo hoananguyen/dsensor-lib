@@ -1,8 +1,8 @@
 package com.hoan.dsensor
 
 import android.hardware.SensorManager
-import android.support.v4.util.SparseArrayCompat
 import android.util.SparseArray
+import androidx.collection.SparseArrayCompat
 import com.hoan.dsensor.interfaces.DSensorEventListener
 import com.hoan.dsensor.interfaces.DSensorEventProcessor
 import com.hoan.dsensor.utils.*
@@ -201,7 +201,6 @@ class DSensorEventProcessorImp(dSensorTypes: Int,
             }
         }
 
-        //if (mRegisteredDirectionList.size() != 0 || mRegisteredWorldCoordinatesList.size() != 0)
         if (::mRotationMatrix.isInitialized) {
             if (SensorManager.getRotationMatrix(mRotationMatrix, null, gravityEvent.values, mSaveDSensorMap[TYPE_DEVICE_MAGNETIC_FIELD]!!.values)) {
                 changedSensorTypes = changedSensorTypes or processRegisteredDSensorUsingRotationMatrix(resultMap)
