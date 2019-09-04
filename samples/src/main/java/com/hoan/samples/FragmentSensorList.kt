@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowManager
 import android.widget.BaseExpandableListAdapter
 import android.widget.ExpandableListView
 import androidx.fragment.app.Fragment
@@ -81,8 +80,10 @@ class FragmentSensorList : Fragment() {
 
         init {
             mListItemLinkedHashMap[R.string.sensors_info] = null
-            mListItemLinkedHashMap[R.string.compass] = arrayListOf(TYPE_COMPASS, TYPE_3D_COMPASS,
-                TYPE_COMPASS_AND_DEPRECATED_ORIENTATION, TYPE_3D_COMPASS_AND_DEPRECATED_ORIENTATION)
+            val compassList = arrayListOf(getCompassSensorType(context!!))
+            compassList.addAll(setOf(compassList[0] or TYPE_NEGATIVE_Z_AXIS_DIRECTION, compassList[0] or TYPE_DEPRECATED_ORIENTATION,
+                compassList[0] or TYPE_DEPRECATED_ORIENTATION or TYPE_NEGATIVE_Z_AXIS_DIRECTION))
+            mListItemLinkedHashMap[R.string.compass] = compassList
             mListItemLinkedHashMap[R.string.sensor_in_world_coord] =
                 arrayListOf(TYPE_DEVICE_ACCELEROMETER or TYPE_WORLD_ACCELEROMETER,
                     TYPE_DEVICE_GRAVITY or TYPE_WORLD_GRAVITY,
@@ -114,8 +115,8 @@ class FragmentSensorList : Fragment() {
             return mListItemLinkedHashMap.values.elementAt(groupPosition)?.size ?: 0
         }
 
-        override fun getChild(groupPosition: Int, childPosition: Int): Int? {
-            return mListItemLinkedHashMap[getGroup(groupPosition)]?.get(childPosition)
+        override fun getChild(groupPosition: Int, childPosition: Int): Int {
+            return mListItemLinkedHashMap[getGroup(groupPosition)]?.get(childPosition) ?: 0
         }
 
         override fun getGroupId(groupPosition: Int): Long {
@@ -136,12 +137,7 @@ class FragmentSensorList : Fragment() {
         }
 
         override fun getChildId(groupPosition: Int, childPosition: Int): Long {
-            return when (getGroup(groupPosition)) {
-                R.string.sensor_in_world_coord -> getChild(groupPosition, childPosition)?.toLong() ?: 0L
-                R.string.compass -> getDSensorTypes((context!!.getSystemService(Context.WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation,
-                                            getChild(groupPosition, childPosition)).toLong()
-                else -> 0L
-            }
+            return getChild(groupPosition, childPosition).toLong()
         }
 
         override fun getGroupCount(): Int {
@@ -161,12 +157,12 @@ class FragmentSensorList : Fragment() {
         }
 
         private fun getCompassName(compassType: Int?): String {
+            val compassDirectionSensor = getCompassSensorType(context!!)
             return when (compassType) {
-                TYPE_COMPASS -> getString(R.string.compass)
-                TYPE_COMPASS_AND_DEPRECATED_ORIENTATION -> getString(R.string.compass_and_deprecated_orientation)
-                TYPE_3D_COMPASS -> getString(R.string.compass_3d)
-                TYPE_3D_COMPASS_AND_DEPRECATED_ORIENTATION -> getString(R.string.compass_3d_and_deprecated_orientation)
-                else -> ""
+                compassDirectionSensor -> getString(R.string.compass)
+                compassDirectionSensor or TYPE_DEPRECATED_ORIENTATION -> getString(R.string.compass_and_deprecated_orientation)
+                compassDirectionSensor or TYPE_NEGATIVE_Z_AXIS_DIRECTION -> getString(R.string.compass_3d)
+                else -> getString(R.string.compass_3d_and_deprecated_orientation)
             }
         }
     }

@@ -1,12 +1,11 @@
 package com.hoan.samples
 
 import android.app.Application
-import android.content.Context
-import android.view.WindowManager
 import androidx.collection.SparseArrayCompat
 import com.hoan.dsensor.DSensorEvent
 import com.hoan.dsensor.TYPE_DEPRECATED_ORIENTATION
 import com.hoan.dsensor.TYPE_NEGATIVE_Z_AXIS_DIRECTION
+import com.hoan.dsensor.getCompassSensorType
 import com.hoan.dsensor.utils.convertToDegree
 import com.hoan.dsensor.utils.logger
 
@@ -24,7 +23,7 @@ class CompassLiveData(application: Application, dSensorTypes: Int) : SensorLiveD
 
     private fun setSensorList(dSensorTypes: Int) {
         synchronized(mDSensorList) {
-            mDSensorList.add(getCompassDirection((mApplication.getSystemService(Context.WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation))
+            mDSensorList.add(getCompassSensorType(mApplication))
 
             if (dSensorTypes and TYPE_NEGATIVE_Z_AXIS_DIRECTION != 0) {
                 mDSensorList.add(TYPE_NEGATIVE_Z_AXIS_DIRECTION)

@@ -1,16 +1,15 @@
 package com.hoan.samples
 
 
-import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowManager
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.hoan.dsensor.TYPE_DEPRECATED_ORIENTATION
 import com.hoan.dsensor.TYPE_NEGATIVE_Z_AXIS_DIRECTION
+import com.hoan.dsensor.getCompassSensorType
 import com.hoan.dsensor.utils.logger
 import kotlinx.android.synthetic.main.fragment_compass.*
 import kotlinx.android.synthetic.main.fragment_compass.view.*
@@ -75,7 +74,7 @@ class FragmentCompass : BaseSensorFragment() {
     }
 
     private fun setCompassDirectionAxis() {
-        mCompassDirectionAxis = getCompassDirection((activity!!.getSystemService(Context.WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation)
+        mCompassDirectionAxis = getCompassSensorType(context!!)
     }
 
     override fun showError(errorMessage: String?) {

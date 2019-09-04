@@ -1,6 +1,56 @@
 package com.hoan.dsensor
 
+import android.content.Context
 import android.hardware.Sensor
+import android.view.Surface
+import android.view.WindowManager
+
+/**
+ *
+ * Compass
+ */
+/**
+ * This type returns the angle between the magnetic north and the projection
+ * of the axis starting from the lower left corner to the upper left corner
+ * of the device.
+ * In case of the device natural orientation i.e Portrait for phone and Landscape
+ * for tablet, this value is the value[0] of getOrientation of the SDK SensorManager class.
+ * However, this type also returns the correct direction independent of type of devices
+ * as well as requested screen orientation of the activity. For example for tablet and
+ * the activity is in Portrait only, the value return is either the direction of the
+ * X-axis or minus X-axis depending on the manufacturer. If the activity does not set
+ * orientation preference then when the activity started the direction is the direction
+ * of the axis parallel to where the user looks.
+ * Thus for a compass app, all you need to do is to call DSensorManager.startSensor
+ * passing in this type.
+ *
+ * The value for this sensor will be from -PI to PI when the device is flat and Float.NAN otherwise.
+ *
+ * Note: this type required the device to have sensor of TYPE_MAGNETIC_FIELD and
+ * TYPE_GRAVITY or TYPE_ACCELEROMETER
+ *
+ * @param context   application context is fine.
+ */
+fun getCompassSensorType(context: Context) : Int {
+    return when ((context.getSystemService(Context.WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation) {
+        Surface.ROTATION_90 -> TYPE_X_AXIS_DIRECTION
+        Surface.ROTATION_180 -> TYPE_NEGATIVE_Y_AXIS_DIRECTION
+        Surface.ROTATION_270 -> TYPE_NEGATIVE_X_AXIS_DIRECTION
+        else -> TYPE_Y_AXIS_DIRECTION
+    }
+}
+
+/**
+ * This is compass as above plus that when the device
+ * is not flat, the value return will be the direction of the device
+ * minus z-axis (the direction of the back camera) instead of Float.NAN
+ *
+ * Note: this type required the device to have sensor of TYPE_MAGNETIC_FIELD and
+ * TYPE_GRAVITY or TYPE_ACCELEROMETER
+ */
+fun get3DCompassSensor(context: Context) : Int {
+    return getCompassSensorType(context) or TYPE_NEGATIVE_Z_AXIS_DIRECTION
+}
 
 fun getDirectionTypes(): List<Int> {
         return arrayListOf(TYPE_X_AXIS_DIRECTION, TYPE_NEGATIVE_X_AXIS_DIRECTION, TYPE_Y_AXIS_DIRECTION,
