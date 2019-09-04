@@ -24,7 +24,7 @@ class DSensorManager(context: Context): SensorEventListener {
 
     private val mSensorManager: SensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
 
-    private val mSensorThread: HandlerThread = HandlerThread("sensor_thread")
+    private var mSensorThread: HandlerThread = HandlerThread("sensor_thread")
 
     private var mDSensorEventProcessor: DSensorEventProcessorImp? = null
 
@@ -35,7 +35,7 @@ class DSensorManager(context: Context): SensorEventListener {
     }
 
     override fun onSensorChanged(event: SensorEvent) {
-        logger("DSensorManager", "onSensorChanged: ${event.sensor.name} value = ${event.values.contentToString()}")
+        logger("DSensorManager", "onSensorChanged: ${event.sensor.name} value = ${event.values!!.contentToString()}")
         mDSensorEventProcessor?.run {
             onDSensorChanged(DSensorEvent(getDSensorType(event.sensor.type), event.accuracy, event.timestamp, event.values))
         }
@@ -63,13 +63,13 @@ class DSensorManager(context: Context): SensorEventListener {
                      historyMaxLength: Int = DEFAULT_HISTORY_SIZE): Boolean {
         logger(DSensorManager::class.java.simpleName, "startDSensor($dSensorTypes, $sensorRate $historyMaxLength)")
 
-        mRegisterResult.mErrorList.clear()
-        mRegisterResult.mSensorRegisteredList.clear()
+        clearRegisterResult()
 
         if (mDSensorEventProcessor != null) {
             stopDSensor()
         }
 
+        mSensorThread = HandlerThread("sensor_thread")
         mSensorThread.start()
 
         mDSensorEventProcessor = DSensorEventProcessorImp(dSensorTypes, dSensorEventListener,
@@ -85,6 +85,11 @@ class DSensorManager(context: Context): SensorEventListener {
         }
 
         return mRegisterResult.mErrorList.isEmpty()
+    }
+
+    private fun clearRegisterResult() {
+        mRegisterResult.mErrorList.clear()
+        mRegisterResult.mSensorRegisteredList.clear()
     }
 
     private fun registerListener(dSensorTypes: Int, sensorRate: Int) {
@@ -178,7 +183,7 @@ class DSensorManager(context: Context): SensorEventListener {
     }
 
     fun stopDSensor() {
-        logger(DSensorManager::class.java.simpleName, "stopDSensor")
+        logger(DSensorManager::class.java.simpleName, "stopDSensor isAlive = ${mSensorThread.isAlive}")
 
         mSensorManager.unregisterListener(this)
 

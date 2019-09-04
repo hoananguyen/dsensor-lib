@@ -1,11 +1,11 @@
 package com.hoan.dsensor.interfaces
 
-import android.util.SparseArray
+import androidx.collection.SparseArrayCompat
 import com.hoan.dsensor.DSensorEvent
 
 /**
  * Call back for SensorManager.startDSensor
  */
 interface DSensorEventListener {
-    fun onDSensorChanged(changedDSensorTypes: Int, resultMap: SparseArray<DSensorEvent>)
+    fun onDSensorChanged(changedDSensorTypes: Int, resultMap: SparseArrayCompat<DSensorEvent>)
 }

@@ -11,6 +11,15 @@ internal const val ONE_FIFTY_FIVE_DEGREE_IN_RADIAN = 2.7052603f
  * Math utility methods
  */
 
+fun addAngle(angle: Float, currentSum: FloatArray) {
+    currentSum[0] += sin(angle)
+    currentSum[1] += cos(angle)
+}
+
+fun averageAngle(currentSum: FloatArray, totalTerms: Int): Float {
+    return atan2(currentSum[0] / totalTerms, currentSum[1] / totalTerms)
+}
+
 fun calculateNorm(vector: FloatArray): Float {
     var norm = 0f
     for (coordinate in vector) {
@@ -19,18 +28,13 @@ fun calculateNorm(vector: FloatArray): Float {
     return sqrt(norm)
 }
 
-fun addAngle(angle: Float, currentSum: FloatArray) {
-    currentSum[0] += sin(angle)
-    currentSum[1] += cos(angle)
-}
+fun convertToDegree(valueInRadian: Float): Int {
+    var convertValue =  Math.toDegrees(valueInRadian.toDouble()).roundToInt()
+    if (convertValue < 0) {
+        convertValue = (convertValue + 360) % 360
+    }
 
-fun removeAngle(angle: Float, currentSum: FloatArray) {
-    currentSum[0] -= sin(angle)
-    currentSum[1] -= cos(angle)
-}
-
-fun averageAngle(currentSum: FloatArray, totalTerms: Int): Float {
-    return atan2(currentSum[0] / totalTerms, currentSum[1] / totalTerms)
+    return convertValue
 }
 
 fun productOfSquareMatrixAndVector(matrix: FloatArray, vector: FloatArray): FloatArray? {
@@ -47,4 +51,9 @@ fun productOfSquareMatrixAndVector(matrix: FloatArray, vector: FloatArray): Floa
         }
     }
     return result
+}
+
+fun removeAngle(angle: Float, currentSum: FloatArray) {
+    currentSum[0] -= sin(angle)
+    currentSum[1] -= cos(angle)
 }

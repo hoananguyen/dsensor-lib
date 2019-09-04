@@ -20,46 +20,33 @@ class MainActivity : AppCompatActivity(), FragmentSensorList.OnFragmentInteracti
         }
     }
 
-    override fun onGroupItemSelected(item: String?) {
+    override fun onGroupItemSelected(item: Int) {
         logger(MainActivity::class.java.simpleName, "onGroupItemSelected: item = $item")
-        if (getString(R.string.sensors_info) == item) {
-            if (supportFragmentManager.findFragmentByTag(FragmentSensorInfo::class.java.simpleName) != null) return
-
-            val backStackCount = supportFragmentManager.backStackEntryCount
-            logger(MainActivity::class.java.simpleName, "onGroupItemSelected: backStackCount = $backStackCount")
-            if (backStackCount > 0) {
-                val fragmentName = supportFragmentManager.getBackStackEntryAt(backStackCount - 1).name
-                val fragment = supportFragmentManager.findFragmentByTag(fragmentName)
-                if (fragment is BaseSensorFragment) {
-                    fragment.stopSensor()
-                }
+        if (R.string.sensors_info == item) {
+            if (supportFragmentManager.findFragmentByTag(FragmentSensorInfo::class.java.simpleName) == null) {
+                loadFragment(fragment_container?.id ?: R.id.fragment_container_large, FragmentSensorInfo(), true)
             }
-            loadFragment(fragment_container?.id ?: R.id.fragment_container_large,
-                FragmentSensorInfo(), true)
         }
     }
 
-    override fun onChildItemSelected(group: String, childItemId: Int) {
+    override fun onChildItemSelected(group: Int, childItemId: Int, childName: String) {
         logger(MainActivity::class.java.simpleName, "onChildItemSelected: group = $group childItemId = $childItemId")
         val backStackCount = supportFragmentManager.backStackEntryCount
         if (backStackCount > 0) {
             val fragmentName = supportFragmentManager.getBackStackEntryAt(backStackCount - 1).name
-            logger(MainActivity::class.java.simpleName, "onChildItemSelected: fragment name = $fragmentName")
             val topOfStackFragment = supportFragmentManager.findFragmentByTag(fragmentName)
             if (topOfStackFragment is BaseSensorFragment) {
-                if (getString(R.string.compass) == group && FragmentCompass::class.java.simpleName == fragmentName
-                    || (getString(R.string.sensor_in_world_coord) == group && FragmentSensorInWorldCoord::class.java.simpleName == fragmentName)) {
-                    topOfStackFragment.onSensorChanged(childItemId)
+                if (R.string.compass == group && FragmentCompass::class.java.simpleName == fragmentName
+                    || (R.string.sensor_in_world_coord == group && FragmentSensorInWorldCoord::class.java.simpleName == fragmentName)) {
+                    topOfStackFragment.onNewSensorSelected(childItemId, childName)
                     return
                 }
-
-                topOfStackFragment.stopSensor()
             }
         }
 
         val fragment = when (group) {
-            getString(R.string.compass) -> FragmentCompass.newInstance(childItemId)
-            getString(R.string.sensor_in_world_coord) -> FragmentSensorInWorldCoord.newInstance(childItemId)
+            R.string.compass -> FragmentCompass.newInstance(childItemId, childName, group)
+            R.string.sensor_in_world_coord -> FragmentSensorInWorldCoord.newInstance(childItemId, childName, group)
             else -> return
         }
 
