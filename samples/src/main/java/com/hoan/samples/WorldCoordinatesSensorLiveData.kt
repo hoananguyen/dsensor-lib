@@ -15,7 +15,7 @@ class WorldCoordinatesSensorLiveData(application: Application, dSensorTypes: Int
         mRegisteredWorldCoordinatesSensor = getRegisteredSensor(dSensorTypes)
     }
 
-    override fun onDSensorChanged(changedDSensorTypes: Int, resultMap: SparseArrayCompat<DSensorEvent>) {
+    override fun onDSensorChanged(resultMap: SparseArrayCompat<DSensorEvent>) {
         logger("WorldCoordinatesSensorLiveData", "onDSensorChanged")
         val map = SparseArrayCompat<List<String>>(2)
         synchronized(mRegisteredWorldCoordinatesSensor) {

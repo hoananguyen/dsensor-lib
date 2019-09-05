@@ -5,7 +5,6 @@ import androidx.collection.SparseArrayCompat
 import com.hoan.dsensor.interfaces.DSensorEventListener
 import com.hoan.dsensor.interfaces.DSensorEventProcessor
 import com.hoan.dsensor.utils.*
-import kotlinx.coroutines.*
 import kotlin.math.atan2
 import kotlin.system.measureTimeMillis
 
@@ -15,9 +14,7 @@ class DSensorEventProcessorImp(dSensorTypes: Int,
                                hasLinearAccelerationSensor: Boolean = true,
                                historyMaxLength: Int = DEFAULT_HISTORY_SIZE) : DSensorEventProcessor {
 
-    private lateinit var mOnDSensorChangedResult: Deferred<Int>
-
-    private val mDSensorEventListener: DSensorEventListener = dSensorEventListener
+    private var mDSensorEventListener: DSensorEventListener? = dSensorEventListener
 
     private val mRegisteredDSensorTypes = dSensorTypes
 
@@ -35,6 +32,8 @@ class DSensorEventProcessorImp(dSensorTypes: Int,
     private lateinit var mSaveDSensorMap: SparseArrayCompat<DSensorEvent>
 
     private lateinit var mRotationMatrix: FloatArray
+
+    private val mLockObject = Object()
 
     /**
      * Property to indicate whether gravity should be calculated i.e device does not gravity sensor
@@ -131,63 +130,53 @@ class DSensorEventProcessorImp(dSensorTypes: Int,
 
     override fun finish() {
         logger("DSensorEventProcessorImp", "finish")
-        if (::mOnDSensorChangedResult.isInitialized) {
-            CoroutineScope(Dispatchers.Default).launch {
-                mOnDSensorChangedResult.cancelAndJoin()
-            }
+        synchronized(mLockObject) {
+            mDSensorEventListener = null
         }
-        //mCoroutineScope.cancel()
     }
 
     override fun onDSensorChanged(dSensorEvent: DSensorEvent) {
         val time = measureTimeMillis {
-            runBlocking {
-                val resultMap = SparseArrayCompat<DSensorEvent>()
-                coroutineScope {
-                    mOnDSensorChangedResult = when (dSensorEvent.sensorType) {
-                        TYPE_DEVICE_ACCELEROMETER -> async { onAccelerometerChanged(dSensorEvent, resultMap) }
-                        TYPE_DEVICE_GRAVITY -> async { onGravityChanged(dSensorEvent, resultMap) }
-                        TYPE_DEVICE_MAGNETIC_FIELD -> async { onMagneticFieldChanged(dSensorEvent, resultMap) }
-                        TYPE_DEVICE_LINEAR_ACCELERATION -> async { onLinearAccelerationChanged(dSensorEvent, resultMap) }
-                        else -> async { onDSensorChangedDefaultHandler(dSensorEvent, resultMap) }
-                    }
-                }
-                val changedSensorTypes = mOnDSensorChangedResult.await()
-                if (changedSensorTypes != 0) {
-                    mDSensorEventListener.onDSensorChanged(changedSensorTypes, resultMap)
+            val resultMap = SparseArrayCompat<DSensorEvent>()
+            when (dSensorEvent.sensorType) {
+                TYPE_DEVICE_ACCELEROMETER -> onAccelerometerChanged(dSensorEvent, resultMap)
+                TYPE_DEVICE_GRAVITY -> onGravityChanged(dSensorEvent, resultMap)
+                TYPE_DEVICE_MAGNETIC_FIELD -> onMagneticFieldChanged(dSensorEvent, resultMap)
+                TYPE_DEVICE_LINEAR_ACCELERATION -> onLinearAccelerationChanged(dSensorEvent, resultMap)
+                else -> onDSensorChangedDefaultHandler(dSensorEvent, resultMap)
+            }
+
+            if (!resultMap.isEmpty) {
+                synchronized(mLockObject) {
+                    mDSensorEventListener?.onDSensorChanged(resultMap)
                 }
             }
         }
         logger("DSensorEventProcessorImp", "onDSensorChanged: type = ${dSensorEvent.sensorType} done in $time")
     }
 
-    private fun onAccelerometerChanged(accelerometerEvent: DSensorEvent, resultMap: SparseArrayCompat<DSensorEvent>): Int {
-        var changedSensorTypes = 0
+    private fun onAccelerometerChanged(accelerometerEvent: DSensorEvent, resultMap: SparseArrayCompat<DSensorEvent>) {
         if (::mSaveDSensorMap.isInitialized && mSaveDSensorMap[TYPE_DEVICE_ACCELEROMETER] != null) {
             saveDSensorEvent(accelerometerEvent)
         }
 
         if (mRegisteredDSensorTypes and TYPE_DEVICE_ACCELEROMETER != 0) {
-            changedSensorTypes = changedSensorTypes or setResultDSensorEventMap(accelerometerEvent, resultMap)
+            setResultDSensorEventMap(accelerometerEvent, resultMap)
         }
 
         if (mCalculateGravity) {
-            changedSensorTypes = changedSensorTypes or
-                    onGravityChanged(calculateGravity(mSaveDSensorMap[TYPE_DEVICE_ACCELEROMETER]!!, mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!),
-                        resultMap, changedSensorTypes)
+            onGravityChanged(calculateGravity(mSaveDSensorMap[TYPE_DEVICE_ACCELEROMETER]!!, mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!),
+                        resultMap)
         }
-
-        return changedSensorTypes
     }
 
-    private fun onGravityChanged(gravityEvent: DSensorEvent, resultMap: SparseArrayCompat<DSensorEvent>, dChangedSensorTypes: Int = 0): Int {
-        var changedSensorTypes = dChangedSensorTypes
+    private fun onGravityChanged(gravityEvent: DSensorEvent, resultMap: SparseArrayCompat<DSensorEvent>) {
         if (::mSaveDSensorMap.isInitialized && mSaveDSensorMap[TYPE_DEVICE_GRAVITY] != null) {
             saveDSensorEvent(gravityEvent)
         }
 
         if (mRegisteredDSensorTypes and TYPE_DEVICE_GRAVITY != 0) {
-            changedSensorTypes = changedSensorTypes or setResultDSensorEventMap(gravityEvent, resultMap)
+            setResultDSensorEventMap(gravityEvent, resultMap)
         }
 
         if (mCalculateLinearAcceleration) {
@@ -196,63 +185,54 @@ class DSensorEventProcessorImp(dSensorTypes: Int,
                 saveDSensorEvent(linearAccelerationEvent)
             }
             if (mRegisteredDSensorTypes and TYPE_DEVICE_LINEAR_ACCELERATION != 0) {
-                changedSensorTypes = changedSensorTypes or setResultDSensorEventMap(linearAccelerationEvent, resultMap)
+                setResultDSensorEventMap(linearAccelerationEvent, resultMap)
             }
         }
 
         if (::mRotationMatrix.isInitialized) {
             if (SensorManager.getRotationMatrix(mRotationMatrix, null, gravityEvent.values, mSaveDSensorMap[TYPE_DEVICE_MAGNETIC_FIELD]!!.values)) {
-                changedSensorTypes = changedSensorTypes or processRegisteredDSensorUsingRotationMatrix(resultMap)
+                processRegisteredDSensorUsingRotationMatrix(resultMap)
             }
         } else {
-            changedSensorTypes = changedSensorTypes or processRegisteredDSensorUsingGravity(resultMap)
+            processRegisteredDSensorUsingGravity(resultMap)
         }
-
-        return changedSensorTypes
     }
 
-    private fun onMagneticFieldChanged(magneticFieldEvent: DSensorEvent, resultMap: SparseArrayCompat<DSensorEvent>): Int {
-        var changedSensorTypes = 0
+    private fun onMagneticFieldChanged(magneticFieldEvent: DSensorEvent, resultMap: SparseArrayCompat<DSensorEvent>) {
         if (::mSaveDSensorMap.isInitialized && mSaveDSensorMap[TYPE_DEVICE_MAGNETIC_FIELD] != null) {
             saveDSensorEvent(magneticFieldEvent)
         }
 
         if (mRegisteredDSensorTypes and TYPE_DEVICE_MAGNETIC_FIELD != 0) {
-            changedSensorTypes = changedSensorTypes or setResultDSensorEventMap(magneticFieldEvent, resultMap)
+            setResultDSensorEventMap(magneticFieldEvent, resultMap)
         }
 
         if (::mRotationMatrix.isInitialized) {
             if (SensorManager.getRotationMatrix(mRotationMatrix, null, mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!.values, magneticFieldEvent.values)) {
-                changedSensorTypes = changedSensorTypes or processRegisteredDSensorUsingRotationMatrix(resultMap)
+                processRegisteredDSensorUsingRotationMatrix(resultMap)
             }
         }
-
-        return changedSensorTypes
     }
 
-    private fun onLinearAccelerationChanged(linearAccelerationEvent: DSensorEvent, resultMap: SparseArrayCompat<DSensorEvent>): Int {
-        var changedSensorTypes = 0
+    private fun onLinearAccelerationChanged(linearAccelerationEvent: DSensorEvent, resultMap: SparseArrayCompat<DSensorEvent>) {
         if (::mSaveDSensorMap.isInitialized && mSaveDSensorMap[TYPE_DEVICE_LINEAR_ACCELERATION] != null) {
             saveDSensorEvent(linearAccelerationEvent)
         }
 
         if (mRegisteredDSensorTypes and TYPE_DEVICE_LINEAR_ACCELERATION != 0) {
-            changedSensorTypes = changedSensorTypes or setResultDSensorEventMap(linearAccelerationEvent, resultMap)
+            setResultDSensorEventMap(linearAccelerationEvent, resultMap)
         }
 
         if (::mRegisteredWorldCoordinatesList.isInitialized && mRegisteredWorldCoordinatesList.find { it.first == TYPE_WORLD_LINEAR_ACCELERATION } != null) {
             productOfSquareMatrixAndVector(mRotationMatrix, linearAccelerationEvent.values)?.apply {
-                changedSensorTypes = changedSensorTypes or
-                        setResultDSensorEventMap(DSensorEvent(TYPE_WORLD_LINEAR_ACCELERATION,
-                            linearAccelerationEvent.accuracy, linearAccelerationEvent.timestamp, this.copyOf()), resultMap)
+                setResultDSensorEventMap(DSensorEvent(TYPE_WORLD_LINEAR_ACCELERATION, linearAccelerationEvent.accuracy,
+                    linearAccelerationEvent.timestamp, this.copyOf()), resultMap)
             }
         }
-
-        return changedSensorTypes
     }
 
-    private fun onDSensorChangedDefaultHandler(event: DSensorEvent, resultMap: SparseArrayCompat<DSensorEvent>): Int {
-        return setResultDSensorEventMap(event, resultMap)
+    private fun onDSensorChangedDefaultHandler(event: DSensorEvent, resultMap: SparseArrayCompat<DSensorEvent>) {
+        setResultDSensorEventMap(event, resultMap)
     }
 
     private fun saveDSensorEvent(event: DSensorEvent) {
@@ -263,63 +243,52 @@ class DSensorEventProcessorImp(dSensorTypes: Int,
         }
     }
 
-    private fun setResultDSensorEventMap(event: DSensorEvent, resultMap: SparseArrayCompat<DSensorEvent>): Int {
+    private fun setResultDSensorEventMap(event: DSensorEvent, resultMap: SparseArrayCompat<DSensorEvent>) {
         resultMap.put(event.sensorType, event.copyOf())
-        return event.sensorType
     }
 
-    private fun processRegisteredDSensorUsingRotationMatrix(resultMap: SparseArrayCompat<DSensorEvent>): Int {
-        var changedSensorTypes = 0
+    private fun processRegisteredDSensorUsingRotationMatrix(resultMap: SparseArrayCompat<DSensorEvent>) {
         if (mRegisteredDSensorTypes and TYPE_PITCH != 0) {
-            changedSensorTypes = changedSensorTypes or setResultDSensorEventMap(calculatePitch(mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!, mRotationMatrix), resultMap)
+            setResultDSensorEventMap(calculatePitch(mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!, mRotationMatrix), resultMap)
         }
 
         if (mRegisteredDSensorTypes and TYPE_ROLL != 0) {
-            changedSensorTypes = changedSensorTypes or setResultDSensorEventMap(calculateRoll(mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!, mRotationMatrix), resultMap)
+            setResultDSensorEventMap(calculateRoll(mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!, mRotationMatrix), resultMap)
         }
 
         if (::mRegisteredWorldCoordinatesList.isInitialized) {
-            changedSensorTypes = changedSensorTypes or setResultDSensorEventListForWorldCoordinatesDSensor(resultMap)
+            setResultDSensorEventListForWorldCoordinatesDSensor(resultMap)
         }
 
         val inclinationEvent by lazy { calculateInclination(mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!, mRotationMatrix) }
         if (mRegisteredDSensorTypes and TYPE_INCLINATION != 0) {
-            changedSensorTypes = changedSensorTypes or setResultDSensorEventMap(inclinationEvent, resultMap)
+            setResultDSensorEventMap(inclinationEvent, resultMap)
         }
 
         if (::mRegisteredDirectionList.isInitialized) {
-            changedSensorTypes = changedSensorTypes or setResultDSensorEventForDirection(inclinationEvent, resultMap)
+            setResultDSensorEventForDirection(inclinationEvent, resultMap)
         }
 
         if (mRegisteredDSensorTypes and TYPE_DEVICE_ROTATION != 0) {
-            changedSensorTypes = changedSensorTypes or setResultDSensorEventListForDeviceRotation(inclinationEvent, resultMap)
+            setResultDSensorEventListForDeviceRotation(inclinationEvent, resultMap)
         }
-
-        return changedSensorTypes
     }
 
-    private fun setResultDSensorEventListForWorldCoordinatesDSensor(resultMap: SparseArrayCompat<DSensorEvent>) : Int {
-        var changedSensorTypes = 0
+    private fun setResultDSensorEventListForWorldCoordinatesDSensor(resultMap: SparseArrayCompat<DSensorEvent>) {
         for (item in mRegisteredWorldCoordinatesList) {
             transformToWorldCoordinate(item.first, mSaveDSensorMap[item.second]!!, mRotationMatrix)?.let {
-                changedSensorTypes = changedSensorTypes or setResultDSensorEventMap(it, resultMap)
+                setResultDSensorEventMap(it, resultMap)
             }
         }
-
-        return changedSensorTypes
     }
 
-    private fun setResultDSensorEventForDirection(inclinationEvent: DSensorEvent, resultMap: SparseArrayCompat<DSensorEvent>): Int {
-        var changedSensorTypes = 0
+    private fun setResultDSensorEventForDirection(inclinationEvent: DSensorEvent, resultMap: SparseArrayCompat<DSensorEvent>) {
         for (direction in mRegisteredDirectionList) {
-            changedSensorTypes = changedSensorTypes or
-                    setResultDSensorEventMap(direction.getDirectionDSensorEvent(inclinationEvent, mRotationMatrix), resultMap)
+            setResultDSensorEventMap(direction.getDirectionDSensorEvent(inclinationEvent, mRotationMatrix), resultMap)
         }
-
-        return changedSensorTypes
     }
 
-    private fun setResultDSensorEventListForDeviceRotation(inclinationEvent: DSensorEvent, resultMap: SparseArrayCompat<DSensorEvent>): Int {
+    private fun setResultDSensorEventListForDeviceRotation(inclinationEvent: DSensorEvent, resultMap: SparseArrayCompat<DSensorEvent>) {
         if (inclinationEvent.values[0] < TWENTY_FIVE_DEGREE_IN_RADIAN || inclinationEvent.values[0]> ONE_FIFTY_FIVE_DEGREE_IN_RADIAN) {
             setResultDSensorEventMap(DSensorEvent(TYPE_DEVICE_ROTATION, inclinationEvent.accuracy, inclinationEvent.timestamp,
                 floatArrayOf(Float.NaN)), resultMap)
@@ -327,32 +296,26 @@ class DSensorEventProcessorImp(dSensorTypes: Int,
             setResultDSensorEventMap(DSensorEvent(TYPE_DEVICE_ROTATION, inclinationEvent.accuracy, inclinationEvent.timestamp,
                 floatArrayOf(atan2(mRotationMatrix[6], mRotationMatrix[7]))), resultMap)
         }
-
-        return TYPE_DEVICE_ROTATION
     }
 
-    private fun processRegisteredDSensorUsingGravity(resultMap: SparseArrayCompat<DSensorEvent>): Int {
-        var changedSensorTypes = 0
+    private fun processRegisteredDSensorUsingGravity(resultMap: SparseArrayCompat<DSensorEvent>) {
         val gravityNorm by lazy { calculateNorm(mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!.values) }
         val inclinationEvent by lazy { calculateInclination(gravityNorm, mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!)}
 
         if (mRegisteredDSensorTypes and TYPE_INCLINATION != 0) {
-            changedSensorTypes = changedSensorTypes or setResultDSensorEventMap(inclinationEvent, resultMap)
+            setResultDSensorEventMap(inclinationEvent, resultMap)
         }
 
         if (mRegisteredDSensorTypes and TYPE_DEVICE_ROTATION != 0) {
-            changedSensorTypes = changedSensorTypes or setResultDSensorEventMap(calculateDeviceRotation(gravityNorm, inclinationEvent,
-                mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!), resultMap)
+            setResultDSensorEventMap(calculateDeviceRotation(gravityNorm, inclinationEvent, mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!), resultMap)
         }
 
         if (mRegisteredDSensorTypes and TYPE_PITCH != 0) {
-            changedSensorTypes = changedSensorTypes or setResultDSensorEventMap(calculatePitch(gravityNorm, mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!), resultMap)
+            setResultDSensorEventMap(calculatePitch(gravityNorm, mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!), resultMap)
         }
 
         if (mRegisteredDSensorTypes and TYPE_ROLL != 0) {
-            changedSensorTypes = changedSensorTypes or setResultDSensorEventMap(calculateRoll(gravityNorm, mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!), resultMap)
+            setResultDSensorEventMap(calculateRoll(gravityNorm, mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!), resultMap)
         }
-
-        return changedSensorTypes
     }
 }

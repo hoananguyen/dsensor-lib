@@ -10,7 +10,7 @@ private const val WRITE_TO_FILE = false
 
 private val DEBUG_CLASSES = arrayOf(
     "dummy",
-    //"DSensorEventProcessorImp",
+    "DSensorEventProcessorImp",
     "CompassLiveData",
     "DSensorManager",
     "FragmentCompass",
@@ -18,7 +18,7 @@ private val DEBUG_CLASSES = arrayOf(
     //"FragmentSensorInfo",
     //"FragmentSensorInWorldCoord",
     "SensorLiveData",
-    //"WorldCoordinatesSensorLiveData",
+    "WorldCoordinatesSensorLiveData",
     //"FragmentSensorList",
     "MainActivity"
     /*"DirectionHistory"

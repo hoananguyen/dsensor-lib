@@ -7,5 +7,5 @@ import com.hoan.dsensor.DSensorEvent
  * Call back for SensorManager.startDSensor
  */
 interface DSensorEventListener {
-    fun onDSensorChanged(changedDSensorTypes: Int, resultMap: SparseArrayCompat<DSensorEvent>)
+    fun onDSensorChanged(resultMap: SparseArrayCompat<DSensorEvent>)
 }

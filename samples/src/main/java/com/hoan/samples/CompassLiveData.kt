@@ -35,7 +35,7 @@ class CompassLiveData(application: Application, dSensorTypes: Int) : SensorLiveD
         }
     }
 
-    override fun onDSensorChanged(changedDSensorTypes: Int, resultMap: SparseArrayCompat<DSensorEvent>) {
+    override fun onDSensorChanged(resultMap: SparseArrayCompat<DSensorEvent>) {
         logger("CompassLiveData", "onDSensorChanged thread name = ${Thread.currentThread().name}")
         val map = SparseArrayCompat<List<String>>(2)
         synchronized(mDSensorList) {
