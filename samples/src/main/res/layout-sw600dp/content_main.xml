@@ -12,7 +12,7 @@
 
     <fragment
             android:id="@+id/sensor_list"
-            android:name="com.hoan.samples.FragmentSensorList"
+            android:name="com.hoan.samples.fragments.FragmentSensorList"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_marginRight="@dimen/activity_horizontal_margin"

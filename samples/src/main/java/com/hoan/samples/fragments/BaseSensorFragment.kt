@@ -1,8 +1,9 @@
-package com.hoan.samples
+package com.hoan.samples.fragments
 
 
 import androidx.fragment.app.Fragment
 import com.hoan.dsensor.utils.logger
+import com.hoan.samples.room.SensorViewModel
 
 
 abstract class BaseSensorFragment : Fragment() {

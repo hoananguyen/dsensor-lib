@@ -1,4 +1,4 @@
-package com.hoan.samples
+package com.hoan.samples.room
 
 import android.app.Application
 import androidx.collection.SparseArrayCompat
@@ -6,6 +6,7 @@ import androidx.lifecycle.MutableLiveData
 import com.hoan.dsensor.*
 import com.hoan.dsensor.interfaces.DSensorEventListener
 import com.hoan.dsensor.utils.logger
+import com.hoan.samples.R
 
 const val ERROR = -1
 const val NAME = 0

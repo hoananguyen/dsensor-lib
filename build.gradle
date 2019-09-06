@@ -32,5 +32,6 @@ ext {
     archLifecycleVersion = '2.2.0-alpha03'
     androidxArchVersion = '2.0.0'
     coroutines = '1.3.0-RC'
+    dagger_version = '2.24'
 }
 

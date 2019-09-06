@@ -19,8 +19,9 @@ private val DEBUG_CLASSES = arrayOf(
     //"FragmentSensorInWorldCoord",
     "SensorLiveData",
     "WorldCoordinatesSensorLiveData",
-    //"FragmentSensorList",
-    "MainActivity"
+    "FragmentSensorList",
+    "MainActivity",
+    "SensorExpandableListAdapter"
     /*"DirectionHistory"
     //DMathKt,
     //DSensorEvent.class.getSimpleName(),*/

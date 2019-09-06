@@ -1,4 +1,4 @@
-package com.hoan.samples
+package com.hoan.samples.fragments
 
 
 import android.os.Bundle
@@ -8,6 +8,8 @@ import android.view.ViewGroup
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.hoan.dsensor.utils.logger
+import com.hoan.samples.R
+import com.hoan.samples.room.*
 import kotlinx.android.synthetic.main.fragment_sensor_in_world_basis.*
 import kotlinx.android.synthetic.main.fragment_sensor_in_world_basis.view.*
 
@@ -34,8 +36,8 @@ class FragmentSensorInWorldCoord : BaseSensorFragment() {
     }
 
     private fun setupViewModel() {
-        mSensorViewModel = ViewModelProvider(this,
-            SensorViewModelProviderFactory(activity!!.application, mSensorType, mGroup)).get(SensorViewModel::class.java)
+        mSensorViewModel = ViewModelProvider(this, SensorViewModelProviderFactory(activity!!.application, mSensorType, mGroup))
+            .get(SensorViewModel::class.java)
         mSensorViewModel.sensorData?.observe(this, Observer {
             logger(FragmentSensorInWorldCoord::class.java.simpleName, "Observer $it")
             when {

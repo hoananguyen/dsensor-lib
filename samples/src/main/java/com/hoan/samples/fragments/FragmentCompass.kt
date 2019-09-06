@@ -1,4 +1,4 @@
-package com.hoan.samples
+package com.hoan.samples.fragments
 
 
 import android.os.Bundle
@@ -11,6 +11,11 @@ import com.hoan.dsensor.TYPE_DEPRECATED_ORIENTATION
 import com.hoan.dsensor.TYPE_NEGATIVE_Z_AXIS_DIRECTION
 import com.hoan.dsensor.getCompassSensorType
 import com.hoan.dsensor.utils.logger
+import com.hoan.samples.R
+import com.hoan.samples.room.ERROR
+import com.hoan.samples.room.NAME
+import com.hoan.samples.room.SensorViewModel
+import com.hoan.samples.room.SensorViewModelProviderFactory
 import kotlinx.android.synthetic.main.fragment_compass.*
 import kotlinx.android.synthetic.main.fragment_compass.view.*
 
@@ -38,8 +43,8 @@ class FragmentCompass : BaseSensorFragment() {
     }
 
     private fun setupViewModel() {
-        mSensorViewModel = ViewModelProvider(this,
-            SensorViewModelProviderFactory(activity!!.application, mSensorType, mGroup)).get(SensorViewModel::class.java)
+        mSensorViewModel = ViewModelProvider(this, SensorViewModelProviderFactory(activity!!.application, mSensorType, mGroup))
+            .get(SensorViewModel::class.java)
         mSensorViewModel.sensorData?.observe(this, Observer {
             logger("FragmentCompass", "Observer $it")
             when {

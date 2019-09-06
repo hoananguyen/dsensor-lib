@@ -6,6 +6,7 @@
     android:paddingStart="@dimen/list_child_margin"
     android:paddingLeft="@dimen/list_child_margin"
     android:textAppearance="?android:textAppearanceSmall"
+    android:textColor="@android:color/black"
     android:gravity="center_vertical" >
 
 </TextView>

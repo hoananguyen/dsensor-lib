@@ -1,4 +1,4 @@
-package com.hoan.samples
+package com.hoan.samples.room
 
 import android.app.Application
 import androidx.collection.SparseArrayCompat
@@ -8,6 +8,7 @@ import com.hoan.dsensor.TYPE_NEGATIVE_Z_AXIS_DIRECTION
 import com.hoan.dsensor.getCompassSensorType
 import com.hoan.dsensor.utils.convertToDegree
 import com.hoan.dsensor.utils.logger
+import com.hoan.samples.R
 
 class CompassLiveData(application: Application, dSensorTypes: Int) : SensorLiveData(application, dSensorTypes) {
     private val mDSensorList = ArrayList<Int>()

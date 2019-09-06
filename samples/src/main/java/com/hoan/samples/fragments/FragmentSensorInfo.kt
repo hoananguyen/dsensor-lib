@@ -1,4 +1,4 @@
-package com.hoan.samples
+package com.hoan.samples.fragments
 
 
 import android.hardware.Sensor
@@ -15,6 +15,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.hoan.dsensor.DSensorManager
 import com.hoan.dsensor.utils.logger
+import com.hoan.samples.R
 import kotlinx.android.synthetic.main.fragment_sensor_info.view.*
 
 

@@ -1,4 +1,4 @@
-package com.hoan.samples
+package com.hoan.samples.room
 
 import android.app.Application
 import androidx.collection.SparseArrayCompat

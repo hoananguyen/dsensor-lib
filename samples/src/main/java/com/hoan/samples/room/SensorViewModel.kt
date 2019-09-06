@@ -1,7 +1,8 @@
-package com.hoan.samples
+package com.hoan.samples.room
 
 import android.app.Application
 import androidx.lifecycle.ViewModel
+import com.hoan.samples.R
 
 
 class SensorViewModel(application: Application, dSensorTypes: Int, group: Int) : ViewModel() {
