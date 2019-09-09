@@ -7,8 +7,15 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.Handler
 import android.os.HandlerThread
-import com.hoan.dsensor.interfaces.DSensorEventListener
+import com.hoan.dsensor.storage.DSensorRepository
+import com.hoan.dsensor.storage.SensorData
+import com.hoan.dsensor.storage.Session
 import com.hoan.dsensor.utils.logger
+import kotlinx.coroutines.*
+import java.util.*
+import java.util.concurrent.atomic.AtomicLong
+import kotlin.collections.ArrayList
+import kotlin.collections.HashSet
 
 const val ERROR_UNSUPPORTED_TYPE = -1
 
@@ -20,6 +27,10 @@ const val TYPE_GYROSCOPE_NOT_AVAILABLE = 32
 const val TYPE_ROTATION_VECTOR_NOT_AVAILABLE = 64
 const val TYPE_ORIENTATION_NOT_AVAILABLE = 128
 
+private const val NOT_SAVE = 0
+private const val SAVE = 1
+private const val SAVE_ONLY = 2
+
 class DSensorManager(context: Context): SensorEventListener {
 
     private val mSensorManager: SensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
@@ -30,16 +41,16 @@ class DSensorManager(context: Context): SensorEventListener {
 
     private val mRegisterResult: RegisterResult = RegisterResult()
 
-    override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {
+    private var mSessionId = AtomicLong(0)
 
-    }
+    private var mSaveData: Int = NOT_SAVE
 
-    override fun onSensorChanged(event: SensorEvent) {
-        logger("DSensorManager", "onSensorChanged: ${event.sensor.name} value = ${event.values!!.contentToString()}")
-        mDSensorEventProcessor?.run {
-            onDSensorChanged(DSensorEvent(getDSensorType(event.sensor.type), event.accuracy, event.timestamp, event.values))
-        }
-    }
+    private val mToBeSavedList = Collections.synchronizedList(ArrayList<DSensorEvent>())
+
+    @kotlinx.coroutines.ObsoleteCoroutinesApi
+    private val mCoroutineScope = CoroutineScope(newSingleThreadContext("retrieve_data_thread"))
+
+    private val mDSensorRepository: DSensorRepository = DSensorRepository(context)
 
     fun listSensor(): List<Sensor> = mSensorManager.getSensorList(Sensor.TYPE_ALL)
 
@@ -47,21 +58,56 @@ class DSensorManager(context: Context): SensorEventListener {
         return mRegisterResult.mErrorList
     }
 
+    @kotlinx.coroutines.ObsoleteCoroutinesApi
+    suspend fun lastSessionData(): DSensorData? {
+        val lastSession: Session?
+        val session: Deferred<Session?> = CoroutineScope(Dispatchers.IO).async {
+            mDSensorRepository.lastSession()
+        }
+        lastSession = session.await()
+        if (lastSession == null) return null
+        mDSensorEventProcessor = DSensorEventProcessorImp(lastSession.dSensorTypes,
+            lastSession.hasGravity, lastSession.hasLinearAcceleration)
+        mCoroutineScope.launch {
+            val result: Deferred<List<SensorData>> = CoroutineScope(Dispatchers.IO).async {
+                mDSensorRepository.sensorDataForSession(lastSession.id)
+            }
+            val sensorDataList = result.await()
+            logger("DSensorManager", "lastSessionData: dataList size = ${sensorDataList.size}")
+            for (sensorData in sensorDataList) {
+                mDSensorEventProcessor?.onDSensorChanged(sensorData.getDSensorEvent())
+            }
+            stopDSensor()
+        }
+        return mDSensorEventProcessor?.getSensorData()
+    }
+
     /**
      * Start DSensor processing, processed results are in the DProcessedSensorEvent parameter of
      * onDSensorChanged method of the DSensorEventListener callback.
      * @param dSensorTypes Bitwise OR of DSensor types
-     * @param dSensorEventListener callback
      * @param sensorRate Sensor rate using android SensorManager rate constants, i.e. SensorManager.SENSOR_DELAY_FASTEST.
      * @param historyMaxLength max history size for averaging.
      * @return true if device has all sensors or can be calculated from other sensors in sensorTypes.
      * Otherwise false (call getErrors for a list of errors).
      */
+    @kotlinx.coroutines.ObsoleteCoroutinesApi
     fun startDSensor(dSensorTypes: Int,
-                     dSensorEventListener: DSensorEventListener,
+                     saveData: Boolean = false,
+                     sessionName: String? = null,
                      sensorRate: Int = SensorManager.SENSOR_DELAY_NORMAL,
-                     historyMaxLength: Int = DEFAULT_HISTORY_SIZE): Boolean {
-        logger(DSensorManager::class.java.simpleName, "startDSensor($dSensorTypes, $sensorRate $historyMaxLength)")
+                     historyMaxLength: Int = DEFAULT_HISTORY_SIZE): DSensorData? {
+        logger(DSensorManager::class.java.simpleName, "startDSensor($dSensorTypes, $saveData, $sessionName, $sensorRate $historyMaxLength)")
+
+        mSessionId.set(0)
+        mSaveData = NOT_SAVE
+
+        val hasGravitySensor = mSensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY) != null
+        val hasLinearAccelerationSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION) != null
+        if (saveData) {
+            mSaveData = SAVE
+            saveSession(dSensorTypes, sessionName, hasGravitySensor, hasLinearAccelerationSensor)
+        }
 
         clearRegisterResult()
 
@@ -72,19 +118,36 @@ class DSensorManager(context: Context): SensorEventListener {
         mSensorThread = HandlerThread("sensor_thread")
         mSensorThread.start()
 
-        mDSensorEventProcessor = DSensorEventProcessorImp(dSensorTypes, dSensorEventListener,
-            mSensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY) != null,
-            mSensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION) != null,
-            historyMaxLength)
+        mDSensorEventProcessor = DSensorEventProcessorImp(dSensorTypes, hasGravitySensor,
+            hasLinearAccelerationSensor, historyMaxLength)
 
         registerListener(dSensorTypes, sensorRate)
 
         if (mRegisterResult.mSensorRegisteredList.isEmpty() && mRegisterResult.mErrorList.isEmpty()) {
             mRegisterResult.mErrorList.add(ERROR_UNSUPPORTED_TYPE)
-            return false
+            return null
         }
+        return mDSensorEventProcessor?.getSensorData()
+    }
 
-        return mRegisterResult.mErrorList.isEmpty()
+    @kotlinx.coroutines.ObsoleteCoroutinesApi
+    private fun saveSession(dSensorTypes: Int, sessionName: String?, hasGravitySensor: Boolean, hasLinearAccelerationSensor: Boolean) {
+        mCoroutineScope.launch {
+            var sessionId = 1L
+            CoroutineScope(Dispatchers.IO).launch {
+                mDSensorRepository.lastSession()?.apply {
+                    sessionId = id + 1
+                }
+                mDSensorRepository.insert(
+                    Session(
+                        sessionId, dSensorTypes, System.currentTimeMillis(),
+                        sessionName, hasGravitySensor, hasLinearAccelerationSensor
+                    )
+                )
+                mSessionId.set(sessionId)
+            }
+            logger("DSensorManager", "id = $mSessionId")
+        }
     }
 
     private fun clearRegisterResult() {
@@ -182,6 +245,7 @@ class DSensorManager(context: Context): SensorEventListener {
         }
     }
 
+    @kotlinx.coroutines.ObsoleteCoroutinesApi
     fun stopDSensor() {
         logger(DSensorManager::class.java.simpleName, "stopDSensor isAlive = ${mSensorThread.isAlive}")
 
@@ -194,6 +258,28 @@ class DSensorManager(context: Context): SensorEventListener {
 
         if (mSensorThread.isAlive) {
             mSensorThread.quit()
+        }
+
+        if (mToBeSavedList.isNotEmpty()) {
+            saveSensorDataList()
+        }
+
+        if (mCoroutineScope.isActive) {
+            mCoroutineScope.cancel()
+        }
+    }
+
+    private fun saveSensorDataList() {
+        logger("DSensorManager", "saveSensorDataList: size = ${mToBeSavedList.size}")
+        CoroutineScope(Dispatchers.IO).launch {
+            val sensorDataList = ArrayList<SensorData>(mToBeSavedList.size)
+            synchronized(mToBeSavedList) {
+                while (mToBeSavedList.isNotEmpty()) {
+                    sensorDataList.add(SensorData(mSessionId.get(), mToBeSavedList.removeAt(0)))
+                }
+            }
+            mDSensorRepository.insert(sensorDataList)
+            mToBeSavedList.clear()
         }
     }
 
@@ -221,6 +307,39 @@ class DSensorManager(context: Context): SensorEventListener {
                 || dSensorTypes and TYPE_NEGATIVE_X_AXIS_DIRECTION != 0
                 || dSensorTypes and TYPE_Y_AXIS_DIRECTION != 0
                 || dSensorTypes and TYPE_NEGATIVE_Y_AXIS_DIRECTION != 0)
+    }
+
+    override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {
+
+    }
+
+    private var i = 1
+    override fun onSensorChanged(event: SensorEvent) {
+        logger("DSensorManager", "onSensorChanged: ${event.sensor.name} value = ${event.values!!.contentToString()} i = ${i++}")
+        val dSensorEvent = DSensorEvent(getDSensorType(event.sensor.type), event.accuracy, event.timestamp, event.values)
+        if (mSaveData != NOT_SAVE) {
+            saveData(dSensorEvent)
+            if (mSaveData == SAVE_ONLY) return
+        }
+        mDSensorEventProcessor?.run {
+            onDSensorChanged(dSensorEvent)
+        }
+    }
+
+    private fun saveData(dSensorEvent: DSensorEvent) {
+        logger("DSensorManager", "saveData: mSessionId = $mSessionId")
+        when (mSessionId.get()){
+            0L -> {
+                synchronized(mToBeSavedList) {
+                    mToBeSavedList.add(dSensorEvent)
+                }
+            }
+            else -> {
+                CoroutineScope(Dispatchers.IO).launch {
+                    mDSensorRepository.insert(SensorData(mSessionId.get(), dSensorEvent))
+                }
+            }
+        }
     }
 
     private class RegisterResult {

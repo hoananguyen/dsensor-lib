@@ -4,18 +4,24 @@ import android.app.Application
 import androidx.collection.SparseArrayCompat
 import androidx.lifecycle.MutableLiveData
 import com.hoan.dsensor.*
-import com.hoan.dsensor.interfaces.DSensorEventListener
 import com.hoan.dsensor.utils.logger
 import com.hoan.samples.R
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 const val ERROR = -1
 const val NAME = 0
 
-abstract class SensorLiveData(application: Application, dSensorTypes: Int) : MutableLiveData<SparseArrayCompat<List<String>>>(), DSensorEventListener {
+abstract class SensorLiveData(application: Application, dSensorTypes: Int) : MutableLiveData<SparseArrayCompat<List<String>>>() {
     protected val mApplication = application
     private val mDSensorManager = DSensorManager(application)
     private var mDSensorType = dSensorTypes
+    private lateinit var mDSensorData: DSensorData
 
+    protected abstract fun onDataChanged(oldValue: SparseArrayCompat<DSensorEvent>, newValue: SparseArrayCompat<DSensorEvent>)
+
+    @kotlinx.coroutines.ObsoleteCoroutinesApi
     override fun onInactive() {
         super.onInactive()
         logger("SensorLiveData", "onInactive")
@@ -23,6 +29,7 @@ abstract class SensorLiveData(application: Application, dSensorTypes: Int) : Mut
         mDSensorManager.stopDSensor()
     }
 
+    @kotlinx.coroutines.ObsoleteCoroutinesApi
     override fun onActive() {
         super.onActive()
 
@@ -30,6 +37,7 @@ abstract class SensorLiveData(application: Application, dSensorTypes: Int) : Mut
         startSensor()
     }
 
+    @kotlinx.coroutines.ObsoleteCoroutinesApi
     open fun onNewSensorSelected(newSensorTypes: Int, name: String) {
         logger("SensorLiveData", "onNewSensorSelected: name = $name")
         mDSensorManager.stopDSensor()
@@ -38,13 +46,21 @@ abstract class SensorLiveData(application: Application, dSensorTypes: Int) : Mut
         setName(name)
     }
 
+    @kotlinx.coroutines.ObsoleteCoroutinesApi
     private fun startSensor() {
         logger("SensorLiveData", "startSensor")
-        if (!mDSensorManager.startDSensor(mDSensorType, this)) {
-            val map = SparseArrayCompat<List<String>>()
-            map.put(ERROR, listOf(getErrorMessage(mDSensorManager.getErrors())))
-            value = map
-            mDSensorManager.stopDSensor()
+        CoroutineScope(Dispatchers.Default).launch {
+            val sensorData = mDSensorManager.lastSessionData()
+            //val sensorData = mDSensorManager.startDSensor(mDSensorType, true, "trial")
+            if (sensorData == null) {
+                val map = SparseArrayCompat<List<String>>()
+                map.put(ERROR, listOf(getErrorMessage(mDSensorManager.getErrors())))
+                value = map
+                mDSensorManager.stopDSensor()
+            } else {
+                mDSensorData = sensorData
+                mDSensorData.onDataChanged = { oldValue, newValue -> onDataChanged(oldValue, newValue) }
+            }
         }
     }
 

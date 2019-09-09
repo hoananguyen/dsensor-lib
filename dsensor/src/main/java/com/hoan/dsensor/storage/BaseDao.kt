@@ -2,7 +2,10 @@ package com.hoan.dsensor.storage
 
 import androidx.room.Insert
 
-interface BaseDao<T> {
+internal interface BaseDao<T> {
     @Insert
-    fun insert(Obj: T)
+    suspend fun insert(Obj: T): Long
+
+    @Insert
+    suspend fun insert(listObj: List<T>)
 }

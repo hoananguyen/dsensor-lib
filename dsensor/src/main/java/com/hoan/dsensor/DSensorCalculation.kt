@@ -17,12 +17,23 @@ private const val ONE_MINUS_ALPHA = 1 - ALPHA
 
 internal fun calculateDeviceRotation(gravityNorm: Float, inclinationEvent: DSensorEvent, gravityDSensorEvent: DSensorEvent): DSensorEvent {
     val deviceRotation = if (inclinationEvent.values[0] < TWENTY_FIVE_DEGREE_IN_RADIAN
-        ||inclinationEvent.values[0] > ONE_FIFTY_FIVE_DEGREE_IN_RADIAN
-    ) {
+        ||inclinationEvent.values[0] > ONE_FIFTY_FIVE_DEGREE_IN_RADIAN) {
         Float.NaN
     }
     else {
         atan2(gravityDSensorEvent.values[0] / gravityNorm, gravityDSensorEvent.values[1] / gravityNorm)
+    }
+
+    return DSensorEvent(TYPE_DEVICE_ROTATION, inclinationEvent.accuracy, inclinationEvent.timestamp, floatArrayOf(deviceRotation))
+}
+
+internal fun calculateDeviceRotation(inclinationEvent: DSensorEvent, rotationMatrix: FloatArray): DSensorEvent {
+    val deviceRotation = if (inclinationEvent.values[0] < TWENTY_FIVE_DEGREE_IN_RADIAN
+        ||inclinationEvent.values[0] > ONE_FIFTY_FIVE_DEGREE_IN_RADIAN) {
+        Float.NaN
+    }
+    else {
+        atan2(rotationMatrix[6], rotationMatrix[7])
     }
 
     return DSensorEvent(TYPE_DEVICE_ROTATION, inclinationEvent.accuracy, inclinationEvent.timestamp, floatArrayOf(deviceRotation))

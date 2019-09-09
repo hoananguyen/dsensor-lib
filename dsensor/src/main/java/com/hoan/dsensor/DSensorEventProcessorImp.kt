@@ -2,19 +2,19 @@ package com.hoan.dsensor
 
 import android.hardware.SensorManager
 import androidx.collection.SparseArrayCompat
-import com.hoan.dsensor.interfaces.DSensorEventListener
 import com.hoan.dsensor.interfaces.DSensorEventProcessor
-import com.hoan.dsensor.utils.*
-import kotlin.math.atan2
+import com.hoan.dsensor.utils.calculateNorm
+import com.hoan.dsensor.utils.logger
+import com.hoan.dsensor.utils.productOfSquareMatrixAndVector
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.system.measureTimeMillis
 
 class DSensorEventProcessorImp(dSensorTypes: Int,
-                               dSensorEventListener: DSensorEventListener,
                                hasGravitySensor: Boolean = true,
                                hasLinearAccelerationSensor: Boolean = true,
                                historyMaxLength: Int = DEFAULT_HISTORY_SIZE) : DSensorEventProcessor {
 
-    private var mDSensorEventListener: DSensorEventListener? = dSensorEventListener
+    private var mDSensorData = DSensorData()
 
     private val mRegisteredDSensorTypes = dSensorTypes
 
@@ -33,7 +33,7 @@ class DSensorEventProcessorImp(dSensorTypes: Int,
 
     private lateinit var mRotationMatrix: FloatArray
 
-    private val mLockObject = Object()
+    private var mIsCancelled = AtomicBoolean(false)
 
     /**
      * Property to indicate whether gravity should be calculated i.e device does not gravity sensor
@@ -128,11 +128,13 @@ class DSensorEventProcessorImp(dSensorTypes: Int,
         return if (resultMap.size() == 0) null else resultMap
     }
 
+    fun getSensorData(): DSensorData {
+        return mDSensorData
+    }
+
     override fun finish() {
         logger("DSensorEventProcessorImp", "finish")
-        synchronized(mLockObject) {
-            mDSensorEventListener = null
-        }
+        mIsCancelled.set(true)
     }
 
     override fun onDSensorChanged(dSensorEvent: DSensorEvent) {
@@ -146,10 +148,8 @@ class DSensorEventProcessorImp(dSensorTypes: Int,
                 else -> onDSensorChangedDefaultHandler(dSensorEvent, resultMap)
             }
 
-            if (!resultMap.isEmpty) {
-                synchronized(mLockObject) {
-                    mDSensorEventListener?.onDSensorChanged(resultMap)
-                }
+            if (!resultMap.isEmpty && !mIsCancelled.get()) {
+                mDSensorData.data = resultMap
             }
         }
         logger("DSensorEventProcessorImp", "onDSensorChanged: type = ${dSensorEvent.sensorType} done in $time")
@@ -270,7 +270,7 @@ class DSensorEventProcessorImp(dSensorTypes: Int,
         }
 
         if (mRegisteredDSensorTypes and TYPE_DEVICE_ROTATION != 0) {
-            setResultDSensorEventListForDeviceRotation(inclinationEvent, resultMap)
+            setResultDSensorEventMap(calculateDeviceRotation(inclinationEvent, mRotationMatrix), resultMap)
         }
     }
 
@@ -285,16 +285,6 @@ class DSensorEventProcessorImp(dSensorTypes: Int,
     private fun setResultDSensorEventForDirection(inclinationEvent: DSensorEvent, resultMap: SparseArrayCompat<DSensorEvent>) {
         for (direction in mRegisteredDirectionList) {
             setResultDSensorEventMap(direction.getDirectionDSensorEvent(inclinationEvent, mRotationMatrix), resultMap)
-        }
-    }
-
-    private fun setResultDSensorEventListForDeviceRotation(inclinationEvent: DSensorEvent, resultMap: SparseArrayCompat<DSensorEvent>) {
-        if (inclinationEvent.values[0] < TWENTY_FIVE_DEGREE_IN_RADIAN || inclinationEvent.values[0]> ONE_FIFTY_FIVE_DEGREE_IN_RADIAN) {
-            setResultDSensorEventMap(DSensorEvent(TYPE_DEVICE_ROTATION, inclinationEvent.accuracy, inclinationEvent.timestamp,
-                floatArrayOf(Float.NaN)), resultMap)
-        } else {
-            setResultDSensorEventMap(DSensorEvent(TYPE_DEVICE_ROTATION, inclinationEvent.accuracy, inclinationEvent.timestamp,
-                floatArrayOf(atan2(mRotationMatrix[6], mRotationMatrix[7]))), resultMap)
         }
     }
 

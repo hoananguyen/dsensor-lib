@@ -15,14 +15,14 @@ class WorldCoordinatesSensorLiveData(application: Application, dSensorTypes: Int
         mRegisteredWorldCoordinatesSensor = getRegisteredSensor(dSensorTypes)
     }
 
-    override fun onDSensorChanged(resultMap: SparseArrayCompat<DSensorEvent>) {
-        logger("WorldCoordinatesSensorLiveData", "onDSensorChanged")
+    override fun onDataChanged(oldValue: SparseArrayCompat<DSensorEvent>, newValue: SparseArrayCompat<DSensorEvent>) {
+        logger("WorldCoordinatesSensorLiveData", "onDSensorChanged $newValue")
         val map = SparseArrayCompat<List<String>>(2)
         synchronized(mRegisteredWorldCoordinatesSensor) {
-            resultMap[mRegisteredWorldCoordinatesSensor.first]?.apply {
+            newValue[mRegisteredWorldCoordinatesSensor.first]?.apply {
                 map.put(DEVICE_COORDINATES, values.map { it.toString() })
             }
-            resultMap[mRegisteredWorldCoordinatesSensor.second]?.apply {
+            newValue[mRegisteredWorldCoordinatesSensor.second]?.apply {
                 map.put(WORLD_COORDINATES, values.map { it.toString() })
             }
         }

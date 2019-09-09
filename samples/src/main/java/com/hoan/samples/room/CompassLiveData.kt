@@ -36,15 +36,15 @@ class CompassLiveData(application: Application, dSensorTypes: Int) : SensorLiveD
         }
     }
 
-    override fun onDSensorChanged(resultMap: SparseArrayCompat<DSensorEvent>) {
+    override fun onDataChanged(oldValue: SparseArrayCompat<DSensorEvent>, newValue: SparseArrayCompat<DSensorEvent>) {
         logger("CompassLiveData", "onDSensorChanged thread name = ${Thread.currentThread().name}")
         val map = SparseArrayCompat<List<String>>(2)
         synchronized(mDSensorList) {
             for (dSensorType in mDSensorList) {
-                resultMap[dSensorType]?.let {
+                newValue[dSensorType]?.let {
                     if (it.values[0].isFinite()) {
                         map.put(dSensorType, listOf(convertToDegree(it.values[0]).toString()))
-                    } else if (resultMap[TYPE_NEGATIVE_Z_AXIS_DIRECTION] == null) {
+                    } else if (newValue[TYPE_NEGATIVE_Z_AXIS_DIRECTION] == null) {
                         map.put(ERROR, listOf(mApplication.getString(R.string.device_not_flat_no_compass_value)))
                     }
                 }
