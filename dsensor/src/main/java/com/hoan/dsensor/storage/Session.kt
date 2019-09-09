@@ -5,7 +5,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 @Entity(tableName = "session_table")
-internal class Session(@PrimaryKey @ColumnInfo(name = "id") val id: Long,
+class Session(@PrimaryKey @ColumnInfo(name = "id") val id: Long,
                        @ColumnInfo(name = "types") val dSensorTypes: Int,
                        @ColumnInfo(name = "start_time") val timestamp: Long,
                        @ColumnInfo(name = "name") val name: String? = null,

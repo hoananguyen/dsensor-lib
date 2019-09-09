@@ -58,6 +58,14 @@ class DSensorManager(context: Context): SensorEventListener {
         return mRegisterResult.mErrorList
     }
 
+    suspend fun lastSession(): Session? {
+        return mDSensorRepository.lastSession()
+    }
+
+    suspend fun allSessions(): List<Session>? {
+        return mDSensorRepository.allSessions()
+    }
+
     @kotlinx.coroutines.ObsoleteCoroutinesApi
     suspend fun lastSessionData(): DSensorData? {
         val lastSession: Session?
@@ -69,9 +77,7 @@ class DSensorManager(context: Context): SensorEventListener {
         mDSensorEventProcessor = DSensorEventProcessorImp(lastSession.dSensorTypes,
             lastSession.hasGravity, lastSession.hasLinearAcceleration)
         mCoroutineScope.launch {
-            val result: Deferred<List<SensorData>> = CoroutineScope(Dispatchers.IO).async {
-                mDSensorRepository.sensorDataForSession(lastSession.id)
-            }
+            val result = getSessionData(lastSession.id)
             val sensorDataList = result.await()
             logger("DSensorManager", "lastSessionData: dataList size = ${sensorDataList.size}")
             for (sensorData in sensorDataList) {
@@ -80,6 +86,26 @@ class DSensorManager(context: Context): SensorEventListener {
             stopDSensor()
         }
         return mDSensorEventProcessor?.getSensorData()
+    }
+
+    @kotlinx.coroutines.ObsoleteCoroutinesApi
+    suspend fun sensorDataForSession(session: Session): DSensorData? {
+        mDSensorEventProcessor = DSensorEventProcessorImp(session.dSensorTypes, session.hasGravity, session.hasLinearAcceleration)
+        mCoroutineScope.launch {
+            val deferredSensorDataList = getSessionData(session.id)
+            val sensorDataList = deferredSensorDataList.await()
+            for (sensorData in sensorDataList) {
+                mDSensorEventProcessor?.onDSensorChanged(sensorData.getDSensorEvent())
+            }
+            stopDSensor()
+        }
+        return mDSensorEventProcessor?.getSensorData()
+    }
+
+    private fun getSessionData(sessionId: Long): Deferred<List<SensorData>> {
+        return CoroutineScope(Dispatchers.IO).async {
+            mDSensorRepository.sensorDataForSession(sessionId)
+        }
     }
 
     /**

@@ -6,9 +6,6 @@ import androidx.lifecycle.MutableLiveData
 import com.hoan.dsensor.*
 import com.hoan.dsensor.utils.logger
 import com.hoan.samples.R
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 const val ERROR = -1
 const val NAME = 0
@@ -49,18 +46,15 @@ abstract class SensorLiveData(application: Application, dSensorTypes: Int) : Mut
     @kotlinx.coroutines.ObsoleteCoroutinesApi
     private fun startSensor() {
         logger("SensorLiveData", "startSensor")
-        CoroutineScope(Dispatchers.Default).launch {
-            val sensorData = mDSensorManager.lastSessionData()
-            //val sensorData = mDSensorManager.startDSensor(mDSensorType, true, "trial")
-            if (sensorData == null) {
-                val map = SparseArrayCompat<List<String>>()
-                map.put(ERROR, listOf(getErrorMessage(mDSensorManager.getErrors())))
-                value = map
-                mDSensorManager.stopDSensor()
-            } else {
-                mDSensorData = sensorData
-                mDSensorData.onDataChanged = { oldValue, newValue -> onDataChanged(oldValue, newValue) }
-            }
+        val sensorData = mDSensorManager.startDSensor(mDSensorType, true, "trial")
+        if (sensorData == null) {
+            val map = SparseArrayCompat<List<String>>()
+            map.put(ERROR, listOf(getErrorMessage(mDSensorManager.getErrors())))
+            value = map
+            mDSensorManager.stopDSensor()
+        } else {
+            mDSensorData = sensorData
+            mDSensorData.onDataChanged = { oldValue, newValue -> onDataChanged(oldValue, newValue) }
         }
     }
 
