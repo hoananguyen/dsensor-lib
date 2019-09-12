@@ -105,21 +105,24 @@ class DSensorEventProcessorImp(dSensorTypes: Int,
             }
         }
 
-        if (mCalculateGravity && resultMap[TYPE_DEVICE_ACCELEROMETER] == null) {
-            resultMap.put(TYPE_DEVICE_ACCELEROMETER, DSensorEvent(TYPE_DEVICE_ACCELEROMETER))
+        if (mCalculateGravity) {
+            resultMap.put(TYPE_DEVICE_GRAVITY, DSensorEvent(TYPE_DEVICE_GRAVITY))
+            if (resultMap[TYPE_DEVICE_ACCELEROMETER] == null) {
+                resultMap.put(TYPE_DEVICE_ACCELEROMETER, DSensorEvent(TYPE_DEVICE_ACCELEROMETER))
+            }
         }
 
         if (::mRotationMatrix.isInitialized) {
             if (resultMap[TYPE_DEVICE_GRAVITY] == null) {
-                resultMap.put(TYPE_DEVICE_GRAVITY, DSensorEvent(TYPE_DEVICE_GRAVITY, 0, 0L, FloatArray(3)))
+                resultMap.put(TYPE_DEVICE_GRAVITY, DSensorEvent(TYPE_DEVICE_GRAVITY))
             }
 
-            resultMap.put(TYPE_DEVICE_MAGNETIC_FIELD, DSensorEvent(TYPE_DEVICE_MAGNETIC_FIELD, 0, 0L, FloatArray(3)))
+            resultMap.put(TYPE_DEVICE_MAGNETIC_FIELD, DSensorEvent(TYPE_DEVICE_MAGNETIC_FIELD))
 
             if (::mRegisteredWorldCoordinatesList.isInitialized) {
                 for (item in mRegisteredWorldCoordinatesList) {
                     if (resultMap[item.second] == null) {
-                        resultMap.put(item.second, DSensorEvent(item.second, 0, 0, FloatArray(3)))
+                        resultMap.put(item.second, DSensorEvent(item.second))
                     }
                 }
             }
@@ -145,7 +148,7 @@ class DSensorEventProcessorImp(dSensorTypes: Int,
                 TYPE_DEVICE_GRAVITY -> onGravityChanged(dSensorEvent, resultMap)
                 TYPE_DEVICE_MAGNETIC_FIELD -> onMagneticFieldChanged(dSensorEvent, resultMap)
                 TYPE_DEVICE_LINEAR_ACCELERATION -> onLinearAccelerationChanged(dSensorEvent, resultMap)
-                else -> onDSensorChangedDefaultHandler(dSensorEvent, resultMap)
+                else -> setResultDSensorEventMap(dSensorEvent, resultMap)
             }
 
             if (!resultMap.isEmpty && !mIsCancelled.get()) {
@@ -165,8 +168,15 @@ class DSensorEventProcessorImp(dSensorTypes: Int,
         }
 
         if (mCalculateGravity) {
-            onGravityChanged(calculateGravity(mSaveDSensorMap[TYPE_DEVICE_ACCELEROMETER]!!, mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!),
-                        resultMap)
+            onGravityChanged(calculateGravity(mSaveDSensorMap[TYPE_DEVICE_ACCELEROMETER]!!, mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!), resultMap)
+        } else if (mCalculateLinearAcceleration && mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!.isValuesInitialized()) {
+            val linearAccelerationEvent = calculateLinearAcceleration(mSaveDSensorMap[TYPE_DEVICE_ACCELEROMETER]!!, mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!)
+            mSaveDSensorMap[TYPE_DEVICE_LINEAR_ACCELERATION]?.apply {
+                saveDSensorEvent(linearAccelerationEvent)
+            }
+            if (mRegisteredDSensorTypes and TYPE_DEVICE_LINEAR_ACCELERATION != 0) {
+                setResultDSensorEventMap(linearAccelerationEvent, resultMap)
+            }
         }
     }
 
@@ -179,7 +189,7 @@ class DSensorEventProcessorImp(dSensorTypes: Int,
             setResultDSensorEventMap(gravityEvent, resultMap)
         }
 
-        if (mCalculateLinearAcceleration) {
+        if (mCalculateLinearAcceleration && mSaveDSensorMap[TYPE_DEVICE_ACCELEROMETER]!!.isValuesInitialized()) {
             val linearAccelerationEvent by lazy { calculateLinearAcceleration(mSaveDSensorMap[TYPE_DEVICE_ACCELEROMETER]!!, mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!) }
             mSaveDSensorMap[TYPE_DEVICE_LINEAR_ACCELERATION]?.apply {
                 saveDSensorEvent(linearAccelerationEvent)
@@ -189,7 +199,7 @@ class DSensorEventProcessorImp(dSensorTypes: Int,
             }
         }
 
-        if (::mRotationMatrix.isInitialized) {
+        if (::mRotationMatrix.isInitialized && mSaveDSensorMap[TYPE_DEVICE_MAGNETIC_FIELD]!!.isValuesInitialized()) {
             if (SensorManager.getRotationMatrix(mRotationMatrix, null, gravityEvent.values, mSaveDSensorMap[TYPE_DEVICE_MAGNETIC_FIELD]!!.values)) {
                 processRegisteredDSensorUsingRotationMatrix(resultMap)
             }
@@ -207,7 +217,7 @@ class DSensorEventProcessorImp(dSensorTypes: Int,
             setResultDSensorEventMap(magneticFieldEvent, resultMap)
         }
 
-        if (::mRotationMatrix.isInitialized) {
+        if (::mRotationMatrix.isInitialized && mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!.isValuesInitialized()) {
             if (SensorManager.getRotationMatrix(mRotationMatrix, null, mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!.values, magneticFieldEvent.values)) {
                 processRegisteredDSensorUsingRotationMatrix(resultMap)
             }
@@ -223,16 +233,14 @@ class DSensorEventProcessorImp(dSensorTypes: Int,
             setResultDSensorEventMap(linearAccelerationEvent, resultMap)
         }
 
-        if (::mRegisteredWorldCoordinatesList.isInitialized && mRegisteredWorldCoordinatesList.find { it.first == TYPE_WORLD_LINEAR_ACCELERATION } != null) {
+        if (::mRegisteredWorldCoordinatesList.isInitialized &&
+                mRegisteredWorldCoordinatesList.find { it.first == TYPE_WORLD_LINEAR_ACCELERATION } != null &&
+                mSaveDSensorMap[TYPE_DEVICE_GRAVITY]!!.isValuesInitialized() && mSaveDSensorMap[TYPE_DEVICE_MAGNETIC_FIELD]!!.isValuesInitialized()) {
             productOfSquareMatrixAndVector(mRotationMatrix, linearAccelerationEvent.values)?.apply {
                 setResultDSensorEventMap(DSensorEvent(TYPE_WORLD_LINEAR_ACCELERATION, linearAccelerationEvent.accuracy,
                     linearAccelerationEvent.timestamp, this.copyOf()), resultMap)
             }
         }
-    }
-
-    private fun onDSensorChangedDefaultHandler(event: DSensorEvent, resultMap: SparseArrayCompat<DSensorEvent>) {
-        setResultDSensorEventMap(event, resultMap)
     }
 
     private fun saveDSensorEvent(event: DSensorEvent) {
@@ -276,8 +284,10 @@ class DSensorEventProcessorImp(dSensorTypes: Int,
 
     private fun setResultDSensorEventListForWorldCoordinatesDSensor(resultMap: SparseArrayCompat<DSensorEvent>) {
         for (item in mRegisteredWorldCoordinatesList) {
-            transformToWorldCoordinate(item.first, mSaveDSensorMap[item.second]!!, mRotationMatrix)?.let {
-                setResultDSensorEventMap(it, resultMap)
+            if (mSaveDSensorMap[item.second]!!.isValuesInitialized()) {
+                transformToWorldCoordinate(item.first, mSaveDSensorMap[item.second]!!, mRotationMatrix)?.let {
+                    setResultDSensorEventMap(it, resultMap)
+                }
             }
         }
     }

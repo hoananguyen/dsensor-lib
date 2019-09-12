@@ -3,7 +3,7 @@ package com.hoan.dsensor
 import android.hardware.SensorManager
 
 
-class DSensorEvent(val sensorType: Int) {
+data class DSensorEvent(val sensorType: Int) {
     var accuracy: Int = SensorManager.SENSOR_STATUS_UNRELIABLE
     var timestamp: Long = 0
     lateinit var values: FloatArray
@@ -16,6 +16,10 @@ class DSensorEvent(val sensorType: Int) {
 
     fun copyOf(): DSensorEvent {
         return DSensorEvent(sensorType, accuracy, timestamp, values.copyOf())
+    }
+
+    fun isValuesInitialized(): Boolean {
+        return ::values.isInitialized
     }
 
     override fun toString(): String {

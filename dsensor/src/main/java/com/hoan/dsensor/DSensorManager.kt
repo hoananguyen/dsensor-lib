@@ -68,44 +68,26 @@ class DSensorManager(context: Context): SensorEventListener {
 
     @kotlinx.coroutines.ObsoleteCoroutinesApi
     suspend fun lastSessionData(): DSensorData? {
-        val lastSession: Session?
-        val session: Deferred<Session?> = CoroutineScope(Dispatchers.IO).async {
+        val lastSession = withContext(Dispatchers.IO) {
             mDSensorRepository.lastSession()
-        }
-        lastSession = session.await()
-        if (lastSession == null) return null
-        mDSensorEventProcessor = DSensorEventProcessorImp(lastSession.dSensorTypes,
-            lastSession.hasGravity, lastSession.hasLinearAcceleration)
-        mCoroutineScope.launch {
-            val result = getSessionData(lastSession.id)
-            val sensorDataList = result.await()
-            logger("DSensorManager", "lastSessionData: dataList size = ${sensorDataList.size}")
-            for (sensorData in sensorDataList) {
-                mDSensorEventProcessor?.onDSensorChanged(sensorData.getDSensorEvent())
-            }
-            stopDSensor()
-        }
+        }?: return null
+        sensorDataForSession(lastSession)
         return mDSensorEventProcessor?.getSensorData()
     }
 
     @kotlinx.coroutines.ObsoleteCoroutinesApi
     suspend fun sensorDataForSession(session: Session): DSensorData? {
         mDSensorEventProcessor = DSensorEventProcessorImp(session.dSensorTypes, session.hasGravity, session.hasLinearAcceleration)
+        val sensorDataList = withContext(Dispatchers.IO) {
+            mDSensorRepository.sensorDataForSession(session.id)
+        }
         mCoroutineScope.launch {
-            val deferredSensorDataList = getSessionData(session.id)
-            val sensorDataList = deferredSensorDataList.await()
             for (sensorData in sensorDataList) {
                 mDSensorEventProcessor?.onDSensorChanged(sensorData.getDSensorEvent())
             }
             stopDSensor()
         }
         return mDSensorEventProcessor?.getSensorData()
-    }
-
-    private fun getSessionData(sessionId: Long): Deferred<List<SensorData>> {
-        return CoroutineScope(Dispatchers.IO).async {
-            mDSensorRepository.sensorDataForSession(sessionId)
-        }
     }
 
     /**
@@ -160,7 +142,7 @@ class DSensorManager(context: Context): SensorEventListener {
     private fun saveSession(dSensorTypes: Int, sessionName: String?, hasGravitySensor: Boolean, hasLinearAccelerationSensor: Boolean) {
         mCoroutineScope.launch {
             var sessionId = 1L
-            CoroutineScope(Dispatchers.IO).launch {
+            withContext(Dispatchers.IO) {
                 mDSensorRepository.lastSession()?.apply {
                     sessionId = id + 1
                 }
@@ -297,13 +279,13 @@ class DSensorManager(context: Context): SensorEventListener {
 
     private fun saveSensorDataList() {
         logger("DSensorManager", "saveSensorDataList: size = ${mToBeSavedList.size}")
-        CoroutineScope(Dispatchers.IO).launch {
-            val sensorDataList = ArrayList<SensorData>(mToBeSavedList.size)
-            synchronized(mToBeSavedList) {
-                while (mToBeSavedList.isNotEmpty()) {
-                    sensorDataList.add(SensorData(mSessionId.get(), mToBeSavedList.removeAt(0)))
-                }
+        val sensorDataList = ArrayList<SensorData>(mToBeSavedList.size)
+        synchronized(mToBeSavedList) {
+            while (mToBeSavedList.isNotEmpty()) {
+                sensorDataList.add(SensorData(mSessionId.get(), mToBeSavedList.removeAt(0)))
             }
+        }
+        CoroutineScope(Dispatchers.IO).launch {
             mDSensorRepository.insert(sensorDataList)
             mToBeSavedList.clear()
         }
