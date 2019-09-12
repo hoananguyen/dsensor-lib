@@ -129,7 +129,7 @@ class DSensorManager(context: Context): SensorEventListener {
         mDSensorEventProcessor = DSensorEventProcessorImp(dSensorTypes, hasGravitySensor,
             hasLinearAccelerationSensor, historyMaxLength)
 
-        registerListener(dSensorTypes, sensorRate)
+        registerListener(dSensorTypes, sensorRate, hasGravitySensor)
 
         if (mRegisterResult.mSensorRegisteredList.isEmpty() && mRegisterResult.mErrorList.isEmpty()) {
             mRegisterResult.mErrorList.add(ERROR_UNSUPPORTED_TYPE)
@@ -163,7 +163,7 @@ class DSensorManager(context: Context): SensorEventListener {
         mRegisterResult.mSensorRegisteredList.clear()
     }
 
-    private fun registerListener(dSensorTypes: Int, sensorRate: Int) {
+    private fun registerListener(dSensorTypes: Int, sensorRate: Int, hasGravitySensor: Boolean) {
         if (dSensorTypes and (TYPE_DEVICE_ACCELEROMETER or TYPE_WORLD_ACCELEROMETER) != 0) {
             registerListener(Sensor.TYPE_ACCELEROMETER, sensorRate, TYPE_ACCELEROMETER_NOT_AVAILABLE)
         }
@@ -195,6 +195,10 @@ class DSensorManager(context: Context): SensorEventListener {
 
         if (worldTypesRegistered(dSensorTypes) || directionTypesRegistered(dSensorTypes)) {
             registerSensorListenerForRotationMatrix(sensorRate)
+        }
+
+        if(dSensorTypes and (TYPE_INCLINATION or TYPE_DEVICE_ROTATION or TYPE_ROLL or TYPE_PITCH) != 0) {
+            registerForCalculationTypesWithGravity(sensorRate, hasGravitySensor)
         }
     }
 
@@ -234,6 +238,25 @@ class DSensorManager(context: Context): SensorEventListener {
 
         if (mRegisterResult.mSensorRegisteredList.contains(Sensor.TYPE_MAGNETIC_FIELD)) {
             registerGravityListener(sensorRate)
+        }
+    }
+
+    /**
+     * TYPE_INCLINATTION, TYPE_DEVICE_ROTATION, TYPE_PITCH and TYPE_ROLL can be calculate using rotation matrix
+     * or gravity. Normally if the device has gravity sensor it also has magnetic field sensor, thus if the device
+     * has gravity sensor then we assume that it also has magnetic sensor and thus report error if it does not
+     * have magnetic sensor (usually it is a defect chip thst causes the magnetic fiels sensor to die in ths case).
+     * So we only calculate the types above only if the device does not have gravity sensor. Of course we can do
+     * the calculation if the device has gravity but no magnetic sensor, but then we have to add hasMagneticField
+     * sensor param to startDSensor and thus make the code a lot more complicated. The types above are normally
+     * use for direction types and without magnetic field sensor, direction types are not possible and thus it is
+     * not wotth the trouble to make the code more complicated for these edge use cases.
+     */
+    private fun registerForCalculationTypesWithGravity(sensorRate: Int, hasGravitySensor: Boolean) {
+        if (hasGravitySensor && !mRegisterResult.mSensorRegisteredList.contains(TYPE_DEVICE_MAGNETIC_FIELD)) {
+            if (mRegisterResult.mErrorList.contains(TYPE_MAGNETIC_FIELD_NOT_AVAILABLE)) return
+            registerListener(Sensor.TYPE_MAGNETIC_FIELD, sensorRate, TYPE_MAGNETIC_FIELD_NOT_AVAILABLE)
+            if (mRegisterResult.mErrorList.contains(TYPE_MAGNETIC_FIELD_NOT_AVAILABLE)) return
         }
     }
 
