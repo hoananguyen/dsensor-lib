@@ -5,7 +5,7 @@
             android:layout_height="match_parent"
             android:layout_marginBottom="@dimen/activity_vertical_margin" >
 
-    <android.support.constraint.ConstraintLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
@@ -237,6 +237,6 @@
                 tools:layout_conversion_wrapWidth="0"
                 tools:layout_conversion_wrapHeight="50"/>
 
-    </android.support.constraint.ConstraintLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </ScrollView>

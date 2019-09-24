@@ -20,8 +20,7 @@ class DSensorEventProcessorImpTest {
     fun setUp() {
         PowerMockito.mockStatic(Log::class.java)
         Mockito.`when`(Log.e(any(), any())).then {
-            println(it.arguments[1] as String)
-            1
+            println(it.arguments[1])
         }
 
         PowerMockito.mockStatic(SensorManager::class.java)
@@ -218,7 +217,7 @@ class DSensorEventProcessorImpTest {
     }
 
     @Test
-    fun testOnDSensorChanged_DSensorData_sensorData_size_is_0_when_param_dsensorTypes_of_DSensorEventProcessorImp_is_of_type_world_accelerometer_and_device_has_gravity_sensor_and_onDSensorChanged_has_been_called_with_both_type_device_gravity_and_type_device_magnetic_field_but_has_not_been_called_with_type_device_acceleromter() {
+    fun testOnDSensorChanged_DSensorData_sensorData_size_is_0_when_param_dsensorTypes_of_DSensorEventProcessorImp_is_of_type_world_accelerometer_and_device_has_gravity_sensor_and_onDSensorChanged_has_been_called_with_both_type_device_gravity_and_type_device_magnetic_field_but_has_not_been_called_with_type_device_accelerometer() {
         val dSensorEventProcessorImp = DSensorEventProcessorImp(TYPE_WORLD_ACCELEROMETER, hasGravitySensor = true, hasLinearAccelerationSensor = false)
         val dSensorData = dSensorEventProcessorImp.getSensorData()
         var dSensorEvent = DSensorEvent(TYPE_DEVICE_GRAVITY, 0, 1, floatArrayOf(0.0f, 9.77631f, 0.812349f))
@@ -380,7 +379,7 @@ class DSensorEventProcessorImpTest {
     }
 
     @Test
-    fun testOnDSensorChanged_DSensorData_sensorData_size_is_0_when_param_dsensorTypes_of_DSensorEventProcessorImp_is_of_type_world_linear_acceleration_and_device_has_gravity_but_no_linear_acceleration_sensor_and_onDSensorChanged_has_not_been_called_with_all_type_device_gravity_and_type_device_magnetic_field_and_type_device_acceleromter() {
+    fun testOnDSensorChanged_DSensorData_sensorData_size_is_0_when_param_dsensorTypes_of_DSensorEventProcessorImp_is_of_type_world_linear_acceleration_and_device_has_gravity_but_no_linear_acceleration_sensor_and_onDSensorChanged_has_not_been_called_with_all_type_device_gravity_and_type_device_magnetic_field_and_type_device_accelerometer() {
         var dSensorEventProcessorImp = DSensorEventProcessorImp(TYPE_WORLD_LINEAR_ACCELERATION, hasGravitySensor = true, hasLinearAccelerationSensor = false)
         var dSensorData = dSensorEventProcessorImp.getSensorData()
         var dSensorEvent = DSensorEvent(TYPE_DEVICE_ACCELEROMETER, 0, 1, floatArrayOf(0.0f, 9.77631f, 0.812349f))
@@ -398,7 +397,7 @@ class DSensorEventProcessorImpTest {
     }
 
     @Test
-    fun testOnDSensorChanged_DSensorData_sensorData_size_is_1_when_param_dsensorTypes_of_DSensorEventProcessorImp_is_of_type_world_linear_acceleration_and_device_has_gravity_but_no_linear_acceleration_sensor_and_onDSensorChanged_has_been_called_with_all_type_device_gravity_and_type_device_magnetic_field_and_type_device_acceleromter() {
+    fun testOnDSensorChanged_DSensorData_sensorData_size_is_1_when_param_dsensorTypes_of_DSensorEventProcessorImp_is_of_type_world_linear_acceleration_and_device_has_gravity_but_no_linear_acceleration_sensor_and_onDSensorChanged_has_been_called_with_all_type_device_gravity_and_type_device_magnetic_field_and_type_device_accelerometer() {
         val dSensorEventProcessorImp = DSensorEventProcessorImp(TYPE_WORLD_LINEAR_ACCELERATION, hasGravitySensor = true, hasLinearAccelerationSensor = false)
         val dSensorData = dSensorEventProcessorImp.getSensorData()
         var dSensorEvent = DSensorEvent(TYPE_DEVICE_ACCELEROMETER, 0, 1, floatArrayOf(0.0f, 9.77631f, 0.812349f))
@@ -412,7 +411,7 @@ class DSensorEventProcessorImpTest {
     }
 
     @Test
-    fun testOnDSensorChanged_DSensorData_sensorData_size_is_0_when_param_dsensorTypes_of_DSensorEventProcessorImp_is_of_type_world_linear_acceleration_and_device_has_no_gravity_but_has_linear_acceleration_sensor_and_onDSensorChanged_has_not_been_called_with_all_type_device_linear_acceleration_and_type_device_magnetic_field_and_type_device_acceleromter() {
+    fun testOnDSensorChanged_DSensorData_sensorData_size_is_0_when_param_dsensorTypes_of_DSensorEventProcessorImp_is_of_type_world_linear_acceleration_and_device_has_no_gravity_but_has_linear_acceleration_sensor_and_onDSensorChanged_has_not_been_called_with_all_type_device_linear_acceleration_and_type_device_magnetic_field_and_type_device_accelerometer() {
         var dSensorEventProcessorImp = DSensorEventProcessorImp(TYPE_WORLD_LINEAR_ACCELERATION, hasGravitySensor = false, hasLinearAccelerationSensor = true)
         var dSensorData = dSensorEventProcessorImp.getSensorData()
         var dSensorEvent = DSensorEvent(TYPE_DEVICE_ACCELEROMETER, 0, 1, floatArrayOf(0.0f, 9.77631f, 0.812349f))
@@ -444,7 +443,7 @@ class DSensorEventProcessorImpTest {
     }
 
     @Test
-    fun testOnDSensorChanged_DSensorData_sensorData_size_is_0_when_param_dsensorTypes_of_DSensorEventProcessorImp_is_of_type_world_linear_acceleration_and_device_has_both_gravity_but_has_linear_acceleration_sensor_and_onDSensorChanged_has_not_been_called_with_all_type_device_linear_acceleration_and_type_device_magnetic_field_and_type_device_acceleromter() {
+    fun testOnDSensorChanged_DSensorData_sensorData_size_is_0_when_param_dsensorTypes_of_DSensorEventProcessorImp_is_of_type_world_linear_acceleration_and_device_has_both_gravity_but_has_linear_acceleration_sensor_and_onDSensorChanged_has_not_been_called_with_all_type_device_linear_acceleration_and_type_device_magnetic_field_and_type_device_accelerometer() {
         var dSensorEventProcessorImp = DSensorEventProcessorImp(TYPE_WORLD_LINEAR_ACCELERATION, hasGravitySensor = true, hasLinearAccelerationSensor = true)
         var dSensorData = dSensorEventProcessorImp.getSensorData()
         var dSensorEvent = DSensorEvent(TYPE_DEVICE_GRAVITY, 0, 1, floatArrayOf(0.0f, 9.77631f, 0.812349f))

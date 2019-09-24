@@ -242,21 +242,20 @@ class DSensorManager(context: Context): SensorEventListener {
     }
 
     /**
-     * TYPE_INCLINATTION, TYPE_DEVICE_ROTATION, TYPE_PITCH and TYPE_ROLL can be calculate using rotation matrix
+     * TYPE_INCLINATION, TYPE_DEVICE_ROTATION, TYPE_PITCH and TYPE_ROLL can be calculate using rotation matrix
      * or gravity. Normally if the device has gravity sensor it also has magnetic field sensor, thus if the device
      * has gravity sensor then we assume that it also has magnetic sensor and thus report error if it does not
-     * have magnetic sensor (usually it is a defect chip thst causes the magnetic fiels sensor to die in ths case).
+     * have magnetic sensor (usually it is a defect chip that causes the magnetic field sensor to die in this case).
      * So we only calculate the types above only if the device does not have gravity sensor. Of course we can do
      * the calculation if the device has gravity but no magnetic sensor, but then we have to add hasMagneticField
      * sensor param to startDSensor and thus make the code a lot more complicated. The types above are normally
      * use for direction types and without magnetic field sensor, direction types are not possible and thus it is
-     * not wotth the trouble to make the code more complicated for these edge use cases.
+     * not worth the trouble to make the code more complicated for these edge use cases.
      */
     private fun registerForCalculationTypesWithGravity(sensorRate: Int, hasGravitySensor: Boolean) {
-        if (hasGravitySensor && !mRegisterResult.mSensorRegisteredList.contains(TYPE_DEVICE_MAGNETIC_FIELD)) {
-            if (mRegisterResult.mErrorList.contains(TYPE_MAGNETIC_FIELD_NOT_AVAILABLE)) return
+        if (hasGravitySensor && !mRegisterResult.mSensorRegisteredList.contains(TYPE_DEVICE_MAGNETIC_FIELD) &&
+            !mRegisterResult.mErrorList.contains(TYPE_MAGNETIC_FIELD_NOT_AVAILABLE)) {
             registerListener(Sensor.TYPE_MAGNETIC_FIELD, sensorRate, TYPE_MAGNETIC_FIELD_NOT_AVAILABLE)
-            if (mRegisterResult.mErrorList.contains(TYPE_MAGNETIC_FIELD_NOT_AVAILABLE)) return
         }
     }
 

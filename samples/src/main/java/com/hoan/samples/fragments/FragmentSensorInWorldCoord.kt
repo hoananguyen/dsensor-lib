@@ -27,7 +27,7 @@ class FragmentSensorInWorldCoord : BaseSensorFragment() {
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        logger(FragmentSensorInWorldCoord::class.java.simpleName, "onCreateView")
+        logger("FragmentSensorInWorldCoord", "onCreateView")
         val v = inflater.inflate(R.layout.fragment_sensor_in_world_basis, container, false)
         v.textview_sensor.text = mName
         setupViewModel()
@@ -36,8 +36,10 @@ class FragmentSensorInWorldCoord : BaseSensorFragment() {
     }
 
     private fun setupViewModel() {
+        logger("FragmentSensorInWorldCoord", "setupViewModel-1")
         mSensorViewModel = ViewModelProvider(this, SensorViewModelProviderFactory(activity!!.application, mSensorType, mGroup))
             .get(SensorViewModel::class.java)
+        logger("FragmentSensorInWorldCoord", "setupViewModel-2")
         mSensorViewModel.sensorData?.observe(this, Observer {
             logger(FragmentSensorInWorldCoord::class.java.simpleName, "Observer $it")
             when {

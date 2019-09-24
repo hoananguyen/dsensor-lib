@@ -28,15 +28,15 @@ internal class DSensorRepository(context: Context) {
         mDSensorDao.insert(sensorDataList)
     }
 
-    fun allSessions(): List<Session>? {
+    suspend fun allSessions(): List<Session>? {
         return mSessionDao.getAllSessions()
     }
 
-    fun lastSession(): Session? {
+    suspend fun lastSession(): Session? {
         return mSessionDao.getLastSession()
     }
 
-    fun sensorDataForSession(sessionId: Long): List<SensorData> {
+    suspend fun sensorDataForSession(sessionId: Long): List<SensorData> {
         return mDSensorDao.getDataForSession(sessionId)
     }
 }

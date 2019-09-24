@@ -7,7 +7,6 @@ import com.hoan.dsensor.utils.calculateNorm
 import com.hoan.dsensor.utils.logger
 import com.hoan.dsensor.utils.productOfSquareMatrixAndVector
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.system.measureTimeMillis
 
 class DSensorEventProcessorImp(dSensorTypes: Int,
                                hasGravitySensor: Boolean = true,
@@ -141,21 +140,18 @@ class DSensorEventProcessorImp(dSensorTypes: Int,
     }
 
     override fun onDSensorChanged(dSensorEvent: DSensorEvent) {
-        val time = measureTimeMillis {
-            val resultMap = SparseArrayCompat<DSensorEvent>()
-            when (dSensorEvent.sensorType) {
-                TYPE_DEVICE_ACCELEROMETER -> onAccelerometerChanged(dSensorEvent, resultMap)
-                TYPE_DEVICE_GRAVITY -> onGravityChanged(dSensorEvent, resultMap)
-                TYPE_DEVICE_MAGNETIC_FIELD -> onMagneticFieldChanged(dSensorEvent, resultMap)
-                TYPE_DEVICE_LINEAR_ACCELERATION -> onLinearAccelerationChanged(dSensorEvent, resultMap)
-                else -> setResultDSensorEventMap(dSensorEvent, resultMap)
-            }
-
-            if (!resultMap.isEmpty && !mIsCancelled.get()) {
-                mDSensorData.data = resultMap
-            }
+        val resultMap = SparseArrayCompat<DSensorEvent>()
+        when (dSensorEvent.sensorType) {
+            TYPE_DEVICE_ACCELEROMETER -> onAccelerometerChanged(dSensorEvent, resultMap)
+            TYPE_DEVICE_GRAVITY -> onGravityChanged(dSensorEvent, resultMap)
+            TYPE_DEVICE_MAGNETIC_FIELD -> onMagneticFieldChanged(dSensorEvent, resultMap)
+            TYPE_DEVICE_LINEAR_ACCELERATION -> onLinearAccelerationChanged(dSensorEvent, resultMap)
+            else -> setResultDSensorEventMap(dSensorEvent, resultMap)
         }
-        logger("DSensorEventProcessorImp", "onDSensorChanged: type = ${dSensorEvent.sensorType} done in $time")
+
+        if (!resultMap.isEmpty && !mIsCancelled.get()) {
+            mDSensorData.data = resultMap
+        }
     }
 
     private fun onAccelerometerChanged(accelerometerEvent: DSensorEvent, resultMap: SparseArrayCompat<DSensorEvent>) {
