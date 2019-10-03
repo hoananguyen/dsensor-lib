@@ -27,9 +27,9 @@ const val TYPE_GYROSCOPE_NOT_AVAILABLE = 32
 const val TYPE_ROTATION_VECTOR_NOT_AVAILABLE = 64
 const val TYPE_ORIENTATION_NOT_AVAILABLE = 128
 
-private const val NOT_SAVE = 0
-private const val SAVE = 1
-private const val SAVE_ONLY = 2
+const val NOT_SAVE = 0
+const val SAVE = 1
+const val SAVE_ONLY = 2
 
 class DSensorManager(context: Context): SensorEventListener {
 
@@ -94,6 +94,8 @@ class DSensorManager(context: Context): SensorEventListener {
      * Start DSensor processing, processed results are in the DProcessedSensorEvent parameter of
      * onDSensorChanged method of the DSensorEventListener callback.
      * @param dSensorTypes Bitwise OR of DSensor types
+     * @param saveData  one of NOT_SAVE, SAVE or SAVE_ONLY, if SAVE_ONLY there will be no immediate return data. The session
+     *                  data will be saved until stopDSensor is called, call lastSessionData or sensorDataForSession for data.
      * @param sensorRate Sensor rate using android SensorManager rate constants, i.e. SensorManager.SENSOR_DELAY_FASTEST.
      * @param historyMaxLength max history size for averaging.
      * @return true if device has all sensors or can be calculated from other sensors in sensorTypes.
@@ -101,19 +103,18 @@ class DSensorManager(context: Context): SensorEventListener {
      */
     @kotlinx.coroutines.ObsoleteCoroutinesApi
     fun startDSensor(dSensorTypes: Int,
-                     saveData: Boolean = false,
+                     saveData: Int = NOT_SAVE,
                      sessionName: String? = null,
                      sensorRate: Int = SensorManager.SENSOR_DELAY_NORMAL,
                      historyMaxLength: Int = DEFAULT_HISTORY_SIZE): DSensorData? {
         logger(DSensorManager::class.java.simpleName, "startDSensor($dSensorTypes, $saveData, $sessionName, $sensorRate $historyMaxLength)")
 
         mSessionId.set(0)
-        mSaveData = NOT_SAVE
+        mSaveData = saveData
 
         val hasGravitySensor = mSensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY) != null
         val hasLinearAccelerationSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION) != null
-        if (saveData) {
-            mSaveData = SAVE
+        if (saveData != 0) {
             saveSession(dSensorTypes, sessionName, hasGravitySensor, hasLinearAccelerationSensor)
         }
 

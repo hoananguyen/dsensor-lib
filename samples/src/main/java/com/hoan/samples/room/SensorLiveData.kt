@@ -46,7 +46,7 @@ abstract class SensorLiveData(application: Application, dSensorTypes: Int) : Mut
     @kotlinx.coroutines.ObsoleteCoroutinesApi
     private fun startSensor() {
         logger("SensorLiveData", "startSensor")
-        val sensorData = mDSensorManager.startDSensor(mDSensorType, true, "trial")
+        val sensorData = mDSensorManager.startDSensor(mDSensorType, NOT_SAVE, "trial")
         if (sensorData == null) {
             val map = SparseArrayCompat<List<String>>()
             map.put(ERROR, listOf(getErrorMessage(mDSensorManager.getErrors())))
