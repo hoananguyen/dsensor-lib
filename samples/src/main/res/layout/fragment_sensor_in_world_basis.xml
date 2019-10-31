@@ -74,7 +74,7 @@
                 android:layout_marginStart="@dimen/activity_horizontal_margin"
                 app:layout_constraintBaseline_toBaselineOf="@id/textview_sensor_x_coord"
                 app:layout_constraintLeft_toRightOf="@id/textview_sensor_x_coord"
-                app:layout_constraintTop_toBottomOf="@id/textview_sensor"
+                app:layout_constraintTop_toBottomOf="@id/textview_device_coordinate"
                 tools:layout_conversion_wrapWidth="0"
                 tools:layout_conversion_wrapHeight="50"/>
 

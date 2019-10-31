@@ -83,7 +83,9 @@ class FragmentCompass : BaseSensorFragment() {
     }
 
     override fun showError(errorMessage: String?) {
-        textview_error.text = errorMessage
+        errorMessage?.let {
+            textview_error.text = it
+        }
     }
 
     private fun setOrientationViewsVisibility() {

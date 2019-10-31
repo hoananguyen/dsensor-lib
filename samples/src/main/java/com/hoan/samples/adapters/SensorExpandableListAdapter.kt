@@ -19,7 +19,8 @@ class SensorExpandableListAdapter @Inject constructor(context: Context, groupChi
         logger("SensorExpandableListAdapter", "getChildName($groupPosition, $childPosition)")
         return when (getGroup(groupPosition)) {
             R.string.sensor_in_world_coord -> getSensorInWorldCoordName(getChild(groupPosition, childPosition))
-            else -> getCompassName(getChild(groupPosition, childPosition))
+            R.string.compass -> getCompassName(getChild(groupPosition, childPosition))
+            else -> mContext.getString(getChild(groupPosition, childPosition))
         }
     }
 

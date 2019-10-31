@@ -27,6 +27,9 @@ class AdapterModule {
                 TYPE_DEVICE_LINEAR_ACCELERATION or TYPE_WORLD_LINEAR_ACCELERATION,
                 TYPE_DEVICE_MAGNETIC_FIELD or TYPE_WORLD_MAGNETIC_FIELD
             )
+        mListItemLinkedHashMap[R.string.sensors] = arrayListOf(R.string.accelerometer, R.string.device_rotation, R.string.gravity,
+            R.string.gyroscope, R.string.inclination, R.string.linear_acceleration, R.string.magnetic_field, R.string.pitch,
+            R.string.roll, R.string.rotation_vector)
         return SensorExpandableListAdapter(context, mListItemLinkedHashMap)
     }
 }

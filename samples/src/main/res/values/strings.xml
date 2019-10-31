@@ -3,9 +3,16 @@
 
     <!-- sensor -->
     <string name="accelerometer">Accelerometer</string>
+    <string name="device_rotation">Device Rotation</string>
     <string name="gravity">Gravity</string>
+    <string name="gyroscope">Gyroscope</string>
+    <string name="inclination">Inclination</string>
     <string name="linear_acceleration">Linear Acceleration</string>
     <string name="magnetic_field">Magnetic Field</string>
+    <string name="pitch">Pitch</string>
+    <string name="roll">Roll</string>
+    <string name="rotation_vector">Rotation Vector</string>
+
 
     <string name="axis_x">X:</string>
     <string name="axis_y">Y:</string>
@@ -21,6 +28,7 @@
     <string name="sensors_info">Sensors info</string>
     <string name="sensor_info_start">The sensors on this device are</string>
     <string name="sensor_in_world_coord">Sensor in world coordinates</string>
+    <string name="sensors">Sensors</string>
 
     <string name="device_not_flat_no_compass_value">No compass value since device is not flat</string>
 
