@@ -31,6 +31,7 @@ class WorldCoordinatesSensorLiveData(application: Application, dSensorTypes: Int
         }
     }
 
+    @UseExperimental(kotlinx.coroutines.ObsoleteCoroutinesApi::class)
     override fun onNewSensorSelected(newSensorTypes: Int, name: String) {
         synchronized(mRegisteredWorldCoordinatesSensor) {
             mRegisteredWorldCoordinatesSensor = getRegisteredSensor(newSensorTypes)

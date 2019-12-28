@@ -77,7 +77,7 @@ fun getDirectionTypes(): List<Int> {
             TYPE_WORLD_LINEAR_ACCELERATION, TYPE_WORLD_GRAVITY, TYPE_WORLD_MAGNETIC_FIELD, TYPE_INCLINATION,
             TYPE_DEVICE_ROTATION, TYPE_PITCH, TYPE_ROLL, TYPE_X_AXIS_DIRECTION, TYPE_NEGATIVE_X_AXIS_DIRECTION,
             TYPE_Y_AXIS_DIRECTION, TYPE_NEGATIVE_Y_AXIS_DIRECTION, TYPE_Z_AXIS_DIRECTION,
-            TYPE_NEGATIVE_Z_AXIS_DIRECTION, TYPE_DEPRECATED_ORIENTATION)
+            TYPE_NEGATIVE_Z_AXIS_DIRECTION)
     }
 
     fun getDSensorType(androidSensor: Int): Int {
@@ -88,8 +88,6 @@ fun getDirectionTypes(): List<Int> {
             Sensor.TYPE_MAGNETIC_FIELD -> TYPE_DEVICE_MAGNETIC_FIELD
             Sensor.TYPE_ROTATION_VECTOR -> TYPE_ROTATION_VECTOR
             Sensor.TYPE_GYROSCOPE -> TYPE_GYROSCOPE
-            @Suppress("DEPRECATION")
-            Sensor.TYPE_ORIENTATION -> TYPE_DEPRECATED_ORIENTATION
             else -> ERROR_UNSUPPORTED_TYPE
         }
     }
@@ -217,13 +215,6 @@ fun getDirectionTypes(): List<Int> {
     const val TYPE_NEGATIVE_Z_AXIS_DIRECTION = 1048576
 
     /**
-     * This is the depreciated Sensor.TYPE_ORIENTATION.
-     *
-     * Values are between -PI and PI.
-     */
-    const val TYPE_DEPRECATED_ORIENTATION = 2097152
-
-    /**
      * All of the above.
      */
     const val TYPE_ALL = (TYPE_DEVICE_ACCELEROMETER or TYPE_WORLD_ACCELEROMETER
@@ -232,7 +223,7 @@ fun getDirectionTypes(): List<Int> {
             or TYPE_DEVICE_LINEAR_ACCELERATION or TYPE_WORLD_LINEAR_ACCELERATION
             or TYPE_GYROSCOPE or TYPE_ROTATION_VECTOR
             or TYPE_INCLINATION or TYPE_DEVICE_ROTATION
-            or TYPE_PITCH or TYPE_ROLL or TYPE_DEPRECATED_ORIENTATION
+            or TYPE_PITCH or TYPE_ROLL
             or TYPE_Z_AXIS_DIRECTION or TYPE_NEGATIVE_Z_AXIS_DIRECTION
             or TYPE_X_AXIS_DIRECTION or TYPE_NEGATIVE_X_AXIS_DIRECTION
             or TYPE_Y_AXIS_DIRECTION or TYPE_NEGATIVE_Y_AXIS_DIRECTION)

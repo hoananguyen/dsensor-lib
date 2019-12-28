@@ -25,7 +25,6 @@ const val TYPE_GRAVITY_NOT_AVAILABLE = 8
 const val TYPE_LINEAR_ACCELERATION_NOT_AVAILABLE = 16
 const val TYPE_GYROSCOPE_NOT_AVAILABLE = 32
 const val TYPE_ROTATION_VECTOR_NOT_AVAILABLE = 64
-const val TYPE_ORIENTATION_NOT_AVAILABLE = 128
 
 const val NOT_SAVE = 0
 const val SAVE = 1
@@ -179,11 +178,6 @@ class DSensorManager(context: Context): SensorEventListener {
 
         if (dSensorTypes and TYPE_ROTATION_VECTOR != 0) {
             registerListener(Sensor.TYPE_ROTATION_VECTOR, sensorRate, TYPE_ROTATION_VECTOR_NOT_AVAILABLE)
-        }
-
-        if (dSensorTypes and TYPE_DEPRECATED_ORIENTATION != 0) {
-            @Suppress("DEPRECATION")
-            registerListener(Sensor.TYPE_ORIENTATION, sensorRate, TYPE_ORIENTATION_NOT_AVAILABLE)
         }
 
         if (dSensorTypes and (TYPE_DEVICE_GRAVITY or TYPE_WORLD_GRAVITY) != 0) {

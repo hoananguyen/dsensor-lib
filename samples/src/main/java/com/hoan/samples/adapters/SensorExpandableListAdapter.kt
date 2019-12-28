@@ -40,9 +40,7 @@ class SensorExpandableListAdapter @Inject constructor(context: Context, groupChi
         val compassDirectionSensor = getCompassSensorType(mContext)
         return when (compassType) {
             compassDirectionSensor -> mContext.getString(R.string.compass)
-            compassDirectionSensor or TYPE_DEPRECATED_ORIENTATION -> mContext.getString(R.string.compass_and_deprecated_orientation)
-            compassDirectionSensor or TYPE_NEGATIVE_Z_AXIS_DIRECTION -> mContext.getString(R.string.compass_3d)
-            else -> mContext.getString(R.string.compass_3d_and_deprecated_orientation)
+            else -> mContext.getString(R.string.compass_3d)
         }
     }
 }

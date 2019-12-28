@@ -22,8 +22,6 @@
 
     <string name="compass">Compass</string>
     <string name="compass_3d">3D Compass</string>
-    <string name="compass_and_deprecated_orientation">Compass &amp; Deprecated Orientation</string>
-    <string name="compass_3d_and_deprecated_orientation">3D Compass &amp; Deprecated Orientation</string>
     <string name="deprecated_orientation">Deprecated Orientation</string>
     <string name="sensors_info">Sensors info</string>
     <string name="sensor_info_start">The sensors on this device are</string>

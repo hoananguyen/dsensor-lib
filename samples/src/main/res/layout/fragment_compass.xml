@@ -38,60 +38,16 @@
             tools:layout_conversion_wrapHeight="50"/>
 
     <TextView
-            android:id="@+id/textview_compass"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/activity_vertical_margin"
-            android:layout_marginBottom="@dimen/activity_vertical_margin"
-            android:textAppearance="?android:textAppearanceMedium"
-            android:textStyle="bold"
-            android:text="@string/compass"
-            app:layout_constraintTop_toBottomOf="@id/textview_error"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            tools:layout_conversion_wrapWidth="200"
-            tools:layout_conversion_wrapHeight="63"/>
-
-    <TextView
             android:id="@+id/textview_compass_value"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/activity_vertical_margin"
             android:textAppearance="?android:textAppearanceMedium"
             android:layout_marginTop="@dimen/activity_vertical_margin"
-            app:layout_constraintTop_toBottomOf="@id/textview_compass"
+            app:layout_constraintTop_toBottomOf="@id/textview_error"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
             tools:layout_conversion_wrapWidth="0"
             tools:layout_conversion_wrapHeight="63"/>
-
-    <TextView
-            android:id="@+id/textview_orientation"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/activity_vertical_margin"
-            android:layout_marginBottom="@dimen/activity_vertical_margin"
-            android:textAppearance="?android:textAppearanceMedium"
-            android:textStyle="bold"
-            android:text="@string/deprecated_orientation"
-            android:visibility="gone"
-            app:layout_constraintTop_toBottomOf="@id/textview_compass_value"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            tools:layout_conversion_wrapWidth="0"
-            tools:layout_conversion_wrapHeight="0"/>
-
-    <TextView
-            android:id="@+id/textview_orientation_value"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/activity_vertical_margin"
-            android:textAppearance="?android:textAppearanceMedium"
-            android:visibility="gone" android:layout_marginTop="@dimen/activity_vertical_margin"
-            app:layout_constraintTop_toBottomOf="@id/textview_orientation"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            tools:layout_conversion_wrapWidth="0"
-            tools:layout_conversion_wrapHeight="0"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

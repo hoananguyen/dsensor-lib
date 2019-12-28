@@ -15,6 +15,7 @@ abstract class BaseSensorFragment : Fragment() {
 
     protected lateinit var mName: String
 
+    @UseExperimental(kotlinx.coroutines.ObsoleteCoroutinesApi::class)
     fun onNewSensorSelected(newSensorType: Int, name: String) {
         logger(BaseSensorFragment::class.java.simpleName, "onNewSensorSelected")
         if (newSensorType != mSensorType) {

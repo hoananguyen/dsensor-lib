@@ -3,7 +3,6 @@ package com.hoan.samples.room
 import android.app.Application
 import androidx.collection.SparseArrayCompat
 import com.hoan.dsensor.DSensorEvent
-import com.hoan.dsensor.TYPE_DEPRECATED_ORIENTATION
 import com.hoan.dsensor.TYPE_NEGATIVE_Z_AXIS_DIRECTION
 import com.hoan.dsensor.getCompassSensorType
 import com.hoan.dsensor.utils.convertToDegree
@@ -17,6 +16,7 @@ class CompassLiveData(application: Application, dSensorTypes: Int) : SensorLiveD
         setSensorList(dSensorTypes)
     }
 
+    @UseExperimental(kotlinx.coroutines.ObsoleteCoroutinesApi::class)
     override fun onNewSensorSelected(newSensorTypes: Int, name: String) {
         setSensorList(newSensorTypes)
         super.onNewSensorSelected(newSensorTypes, name)
@@ -28,10 +28,6 @@ class CompassLiveData(application: Application, dSensorTypes: Int) : SensorLiveD
 
             if (dSensorTypes and TYPE_NEGATIVE_Z_AXIS_DIRECTION != 0) {
                 mDSensorList.add(TYPE_NEGATIVE_Z_AXIS_DIRECTION)
-            }
-
-            if (dSensorTypes and TYPE_DEPRECATED_ORIENTATION != 0) {
-                mDSensorList.add(TYPE_DEPRECATED_ORIENTATION)
             }
         }
     }

@@ -7,7 +7,6 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import com.hoan.dsensor.TYPE_DEPRECATED_ORIENTATION
 import com.hoan.dsensor.TYPE_NEGATIVE_Z_AXIS_DIRECTION
 import com.hoan.dsensor.getCompassSensorType
 import com.hoan.dsensor.utils.logger
@@ -51,27 +50,18 @@ class FragmentCompass : BaseSensorFragment() {
                 it[ERROR] != null -> showError(it[ERROR]!![0])
                 it[NAME] != null -> {
                     setTitle(it[NAME]!![0])
-                    setOrientationViewsVisibility()
                     setCompassDirectionAxis()
                 }
                 else -> {
                     when {
                         it[TYPE_NEGATIVE_Z_AXIS_DIRECTION] != null ->
                             textview_compass_value.text = it[TYPE_NEGATIVE_Z_AXIS_DIRECTION]!![0]
-                        it[TYPE_DEPRECATED_ORIENTATION] != null ->
-                            textview_orientation_value.text = it[TYPE_DEPRECATED_ORIENTATION]!![0]
                         else ->
                             textview_compass_value.text = it[mCompassDirectionAxis]!![0]
                     }
                 }
             }
         })
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
-        setOrientationViewsVisibility()
     }
 
     private fun setTitle(title: String) {
@@ -85,18 +75,6 @@ class FragmentCompass : BaseSensorFragment() {
     override fun showError(errorMessage: String?) {
         errorMessage?.let {
             textview_error.text = it
-        }
-    }
-
-    private fun setOrientationViewsVisibility() {
-        if ((mSensorType and TYPE_DEPRECATED_ORIENTATION) != 0) {
-            if (textview_orientation.visibility != View.VISIBLE) {
-                textview_orientation.visibility = View.VISIBLE
-                textview_orientation_value.visibility = View.VISIBLE
-            }
-        } else if (textview_orientation.visibility == View.VISIBLE) {
-            textview_orientation.visibility = View.GONE
-            textview_orientation_value.visibility = View.GONE
         }
     }
 }

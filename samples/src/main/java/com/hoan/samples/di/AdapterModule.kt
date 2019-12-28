@@ -16,9 +16,7 @@ class AdapterModule {
         val mListItemLinkedHashMap: MutableMap<Int, List<Int>?> = LinkedHashMap()
         mListItemLinkedHashMap[R.string.sensors_info] = null
         val compassList = arrayListOf(getCompassSensorType(context))
-        compassList.addAll(setOf(compassList[0] or TYPE_NEGATIVE_Z_AXIS_DIRECTION,
-            compassList[0] or TYPE_DEPRECATED_ORIENTATION,
-            compassList[0] or TYPE_DEPRECATED_ORIENTATION or TYPE_NEGATIVE_Z_AXIS_DIRECTION))
+        compassList.addAll(setOf(compassList[0] or TYPE_NEGATIVE_Z_AXIS_DIRECTION))
         mListItemLinkedHashMap[R.string.compass] = compassList
         mListItemLinkedHashMap[R.string.sensor_in_world_coord] =
             arrayListOf(
